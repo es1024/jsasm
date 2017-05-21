@@ -131,6 +131,9 @@ class X86 {
             scale = SIB >> 6;
             index = (SIB >> 3) & 0x7;
             base = SIB & 0x7;
+            if (base == 5) {
+                throw new sigill_1.default('SIB base=5');
+            }
         }
         switch (mod) {
             case 2:
