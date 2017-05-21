@@ -39,6 +39,10 @@ const enum X86Reg {
   EFLAGS = 9,
 }
 
+const ARITH_FLAG_CLEAR = ~((1 << <number>X86Flag.OF) | (1 << <number>X86Flag.SF) |
+    (1 << <number>X86Flag.ZF) | (1 << <number>X86Flag.AF) |
+    (1 << <number>X86Flag.PF) | (1 << <number>X86Flag.CF));
+
 export default class X86 {
   private regs: Uint32Array;
   private mem: MemoryManager;
@@ -58,6 +62,12 @@ export default class X86 {
     this.regs[<number> X86Reg.EFLAGS] = regs.eflags;
 
     this.add = this.add.bind(this);
+    this.or = this.or.bind(this);
+    this.adc = this.adc.bind(this);
+    this.sbb = this.sbb.bind(this);
+    this.and = this.and.bind(this);
+    this.sub = this.sub.bind(this);
+    this.xor = this.xor.bind(this);
   }
 
   getRegisters(): X86Registers {
@@ -93,6 +103,12 @@ export default class X86 {
     const w = !!(op & 0x01);
     switch (op >> 2) {
       case 0: this.processModRegRM(d, w, this.add); break;
+      case 2: this.processModRegRM(d, w, this.or); break;
+      case 4: this.processModRegRM(d, w, this.adc); break;
+      case 6: this.processModRegRM(d, w, this.sbb); break;
+      case 8: this.processModRegRM(d, w, this.and); break;
+      case 10: this.processModRegRM(d, w, this.sub); break;
+      case 12: this.processModRegRM(d, w, this.xor); break;
       default:
         throw new SIGILL('probably just unimplemented or something');
     }
@@ -140,23 +156,77 @@ export default class X86 {
     }
   }
 
-  private parity(a: number): boolean {
+  private parity(a: number): number {
     a ^= a >> 4;
     a &= 0xF;
-    return ((0x6996 >> a) & 1) == 0;
+    return (~(0x6996 >> a)) & 1;
   }
 
   private add(a: number, b: number, w: boolean): number {
-    const r = a + b;
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    return this.adc(a, b, w);
+  }
+
+  private or(a: number, b: number, w: boolean): number {
+    const r = a | b;
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
-    this.setFlag(X86Flag.OF, (a & n) == (b & n) && (a & n) != (r & n));
-    this.setFlag(X86Flag.SF, (r & n) != 0);
-    this.setFlag(X86Flag.ZF, (r & m) == 0);
-    this.setFlag(X86Flag.AF, (a & (1 << 3)) != 0 && (b & (1 << 3)) != 0);
-    this.setFlag(X86Flag.PF, this.parity(a));
-    this.setFlag(X86Flag.CF, (r & m) != (r | 0));
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    return r;
+  }
+
+  private adc(a: number, b: number, w: boolean): number {
+    const cf = (this.regs[X86Reg.EFLAGS] >> (<number> X86Flag.CF)) & 1;
+    const r = a + b + cf;
+    const m = w ? 0xFFFFFFFF : 0xFF;
+    const n = w ? 0x80000000 : 0x80;
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    this.regs[X86Reg.EFLAGS] |= ((a & n) == (b & n) && (a & n) != (r & n) ? 1 : 0)
+        << <number> X86Flag.OF;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= ((a & 0xF) + (b & 0xF) + cf > 0xF ? 1 : 0)
+        << <number> X86Flag.AF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) != (r | 0) ? 1 : 0) << <number> X86Flag.CF;
     return r & m;
+  }
+
+  private sbb(a: number, b: number, w: boolean): number {
+    this.regs[X86Reg.EFLAGS] ^= 1 << <number> X86Flag.CF;
+    const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
+    this.regs[X86Reg.EFLAGS] ^= 1 << <number> X86Flag.CF;
+    return r;
+  }
+
+  private and(a: number, b: number, w: boolean): number {
+    const r = a & b;
+    const m = w ? 0xFFFFFFFF : 0xFF;
+    const n = w ? 0x80000000 : 0x80;
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    return r;
+  }
+
+  private sub(a: number, b: number, w: boolean): number {
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    return this.sbb(a, b, w);
+  }
+
+  private xor(a: number, b: number, w: boolean): number {
+    const r = a ^ b;
+    const m = w ? 0xFFFFFFFF : 0xFF;
+    const n = w ? 0x80000000 : 0x80;
+    this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    return r;
   }
 }
 

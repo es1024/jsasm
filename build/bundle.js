@@ -336,6 +336,9 @@ var X86Reg;
     X86Reg[X86Reg["EIP"] = 8] = "EIP";
     X86Reg[X86Reg["EFLAGS"] = 9] = "EFLAGS";
 })(X86Reg || (X86Reg = {}));
+const ARITH_FLAG_CLEAR = ~((1 << 11) | (1 << 7) |
+    (1 << 6) | (1 << 4) |
+    (1 << 2) | (1 << 0));
 class X86 {
     constructor(mem, regs) {
         this.mem = mem;
@@ -351,6 +354,12 @@ class X86 {
         this.regs[8] = regs.eip;
         this.regs[9] = regs.eflags;
         this.add = this.add.bind(this);
+        this.or = this.or.bind(this);
+        this.adc = this.adc.bind(this);
+        this.sbb = this.sbb.bind(this);
+        this.and = this.and.bind(this);
+        this.sub = this.sub.bind(this);
+        this.xor = this.xor.bind(this);
     }
     getRegisters() {
         return {
@@ -384,6 +393,24 @@ class X86 {
         switch (op >> 2) {
             case 0:
                 this.processModRegRM(d, w, this.add);
+                break;
+            case 2:
+                this.processModRegRM(d, w, this.or);
+                break;
+            case 4:
+                this.processModRegRM(d, w, this.adc);
+                break;
+            case 6:
+                this.processModRegRM(d, w, this.sbb);
+                break;
+            case 8:
+                this.processModRegRM(d, w, this.and);
+                break;
+            case 10:
+                this.processModRegRM(d, w, this.sub);
+                break;
+            case 12:
+                this.processModRegRM(d, w, this.xor);
                 break;
             default:
                 throw new sigill_1.default('probably just unimplemented or something');
@@ -430,19 +457,67 @@ class X86 {
     parity(a) {
         a ^= a >> 4;
         a &= 0xF;
-        return ((0x6996 >> a) & 1) == 0;
+        return (~(0x6996 >> a)) & 1;
     }
     add(a, b, w) {
-        const r = a + b;
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        return this.adc(a, b, w);
+    }
+    or(a, b, w) {
+        const r = a | b;
         const m = w ? 0xFFFFFFFF : 0xFF;
         const n = w ? 0x80000000 : 0x80;
-        this.setFlag(11, (a & n) == (b & n) && (a & n) != (r & n));
-        this.setFlag(7, (r & n) != 0);
-        this.setFlag(6, (r & m) == 0);
-        this.setFlag(4, (a & (1 << 3)) != 0 && (b & (1 << 3)) != 0);
-        this.setFlag(2, this.parity(a));
-        this.setFlag(0, (r & m) != (r | 0));
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        this.regs[9] |= ((r & n) != 0 ? 1 : 0) << 7;
+        this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
+        this.regs[9] |= this.parity(a) << 2;
+        return r;
+    }
+    adc(a, b, w) {
+        const cf = (this.regs[9] >> 0) & 1;
+        const r = a + b + cf;
+        const m = w ? 0xFFFFFFFF : 0xFF;
+        const n = w ? 0x80000000 : 0x80;
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        this.regs[9] |= ((a & n) == (b & n) && (a & n) != (r & n) ? 1 : 0)
+            << 11;
+        this.regs[9] |= ((r & n) != 0 ? 1 : 0) << 7;
+        this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
+        this.regs[9] |= ((a & 0xF) + (b & 0xF) + cf > 0xF ? 1 : 0)
+            << 4;
+        this.regs[9] |= this.parity(a) << 2;
+        this.regs[9] |= ((r & m) != (r | 0) ? 1 : 0) << 0;
         return r & m;
+    }
+    sbb(a, b, w) {
+        this.regs[9] ^= 1 << 0;
+        const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
+        this.regs[9] ^= 1 << 0;
+        return r;
+    }
+    and(a, b, w) {
+        const r = a & b;
+        const m = w ? 0xFFFFFFFF : 0xFF;
+        const n = w ? 0x80000000 : 0x80;
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        this.regs[9] |= ((r & n) != 0 ? 1 : 0) << 7;
+        this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
+        this.regs[9] |= this.parity(a) << 2;
+        return r;
+    }
+    sub(a, b, w) {
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        return this.sbb(a, b, w);
+    }
+    xor(a, b, w) {
+        const r = a ^ b;
+        const m = w ? 0xFFFFFFFF : 0xFF;
+        const n = w ? 0x80000000 : 0x80;
+        this.regs[9] &= ARITH_FLAG_CLEAR;
+        this.regs[9] |= ((r & n) != 0 ? 1 : 0) << 7;
+        this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
+        this.regs[9] |= this.parity(a) << 2;
+        return r;
     }
 }
 exports.default = X86;
