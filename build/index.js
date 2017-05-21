@@ -41,6 +41,11 @@ function init(src) {
         textLength: 65536,
         stackLength: 65536,
     });
+    src = src.toUpperCase().replace(/[^\dA-F]/g, '');
+    const words = src.match(/.{1,8}/g);
+    for (let i = 0; i < words.length; ++i) {
+        mem.writeWord(address_1.TEXT_MASK | (i << 2), parseInt(words[i], 16));
+    }
     x86Machine = new x86_1.default(mem, {
         eax: 0,
         ecx: 0,
@@ -53,11 +58,6 @@ function init(src) {
         eip: mem.getTextBaseAddr(),
         eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
     });
-    src = src.toUpperCase().replace(/[^\dA-F]/g, '');
-    const words = src.match(/.{1,8}/g);
-    for (let i = 0; i < words.length; ++i) {
-        mem.writeWord(address_1.TEXT_MASK | (i << 2), parseInt(words[i], 16));
-    }
 }
 function run() {
 }

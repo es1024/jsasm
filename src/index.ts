@@ -45,6 +45,12 @@ function init(src: string): void {
     stackLength: 65536,
   });
 
+  src = src.toUpperCase().replace(/[^\dA-F]/g, '');
+  const words = src.match(/.{1,8}/g);
+  for (let i = 0; i < words.length; ++i) {
+    mem.writeWord(TEXT_MASK | (i << 2), parseInt(words[i], 16));
+  }
+
   x86Machine = new X86(mem, {
     eax: 0,
     ecx: 0,
@@ -58,12 +64,6 @@ function init(src: string): void {
     // lots of "always 1" flags
     eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
   });
-
-  src = src.toUpperCase().replace(/[^\dA-F]/g, '');
-  const words = src.match(/.{1,8}/g);
-  for (let i = 0; i < words.length; ++i) {
-    mem.writeWord(TEXT_MASK | (i << 2), parseInt(words[i], 16));
-  }
 }
 
 function run(): void {
