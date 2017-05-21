@@ -1,0 +1,25 @@
+{
+  "name": "jsasm",
+  "version": "0.0.1",
+  "description": "tbd",
+  "scripts": {
+    "build": "bin/build",
+    "lint": "node_modules/.bin/tslint --project ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/es1024/jsasm.git"
+  },
+  "author": "Eric Sheng",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/es1024/jsasm/issues"
+  },
+  "homepage": "https://github.com/es1024/jsasm#readme",
+  "dependencies": {
+    "source-map-loader": "^0.2.1",
+    "tslint": "^5.2.0",
+    "typescript": "^2.3.2",
+    "webpack": "^2.5.1"
+  }
+}

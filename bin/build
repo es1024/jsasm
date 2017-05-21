@@ -1,0 +1,21 @@
+#!/bin/bash
+
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)/.."
+
+cd $PROJECT_DIR
+
+./node_modules/.bin/tsc -p .
+rval=$?
+if [ $rval -ne 0 ];
+then
+    echo "tsc failed (error code: $rval)"
+    exit 1
+fi
+
+./node_modules/.bin/webpack
+rval=$?
+if [ $rval -ne 0 ];
+then
+    echo "webpack failed (error code: $rval)"
+    exit 2
+fi
