@@ -127,14 +127,80 @@ export default class X86 {
   private processModRegRM(d: boolean, w: boolean, k: boolean,
       f: (a: number, b: number, w: boolean) => number): void {
     const modRM = this.nextInstByte();
+    const mod = modRM >> 6;
     let reg = (modRM >> 3) & 0x7;
     let RM = modRM & 0x7;
-    switch (modRM >> 6) {
-      case 0:
-      break;
-      case 1:
-      break;
+    let offset = 0;
+    let scale = 1;
+    let index = 0;
+    let base = RM;
+    let addr = 0;
+    if (mod < 3 && RM == 5) {
+      const SIB = this.nextInstByte();
+      scale = SIB >> 6;
+      index = (SIB >> 3) & 0x7;
+      base = SIB & 0x7;
+    }
+    switch (mod) {
       case 2:
+        offset &= this.nextInstByte();
+        offset &= this.nextInstByte() << 8;
+        offset &= this.nextInstByte() << 16;
+      case 1:
+        offset &= this.nextInstByte() << 24;
+        if (mod == 1) {
+          offset >>= 24;
+        }
+      case 0:
+        if (base == 6 && mod == 0) {
+          addr &= this.nextInstByte();
+          addr &= this.nextInstByte() << 8;
+          addr &= this.nextInstByte() << 16;
+          addr &= this.nextInstByte() << 24;
+        } else {
+          addr = this.regs[base] + offset;
+        }
+        if (RM == 5) {
+          addr += index << scale;
+        }
+        addr &= 0xFFFFFFFF;
+
+        let memVal = 0;
+        let memA = 0, memB = 0, maskTop = 0, maskBottom = 0, cTop = 0, cBottom = 0;
+        if ((addr & 0x3) == 0) {
+          memVal = this.mem.readWord(addr);
+        } else {
+          cTop = ((~addr) & 0x3) << 3;
+          cBottom = (addr & 0x3) << 3;
+          maskBottom = (1 << cBottom) - 1;
+          maskTop = ~maskBottom;
+          memA = this.mem.readWord(addr & ~0x3);
+          memB = this.mem.readWord((addr & ~0x3) + 4);
+          memVal = memB & maskBottom;
+          memVal <<= cTop;
+          memVal &= memA >> cBottom;
+        }
+
+        if (d) {
+          const v = f(this.regs[reg], memVal, w);
+          if (k) {
+            this.regs[reg] = v;
+          }
+        } else {
+          const v = f(memVal, this.regs[reg], w);
+          if (k) {
+            if ((addr & 0x3) == 0) {
+              this.mem.writeWord(addr, v);
+            } else {
+              memA &= maskBottom;
+              memB &= maskTop;
+              memA |= (v & ((1 << cTop) - 1)) << cBottom;
+              memB |= (v & ~((1 << cTop) - 1));
+              this.mem.writeWord(addr & ~0x3, memA);
+              this.mem.writeWord((addr & ~0x3) + 4, memB);
+            }
+          }
+        }
       break;
       case 3:
         if (d) {
