@@ -2,10 +2,120 @@
 <html>
   <head>
     <title>jsasm</title>
+    <style>
+    .register span, .flag span {
+      font-weight: bold;
+      text-align: right;
+      float: left;
+      width: 60px;
+      padding-right: 5px;
+    }
+    .register span:before {
+      content: '%';
+    }
+    .register input {
+      width: 80px;
+    }
+    </style>
   </head>
   <body>
-    <h1>hello</h1>
+    <h1>jsasm</h1>
+    <div style="font-size: 12px;font-family: Helvetica, Arial, sans-serif;">
+      <div style="float: left;">
+        x86 Source (hex): <br>
+        <textarea id="x86-src" rows="30" cols="50"></textarea> <br>
 
+        <span style="float: right">
+          <input type="button" onclick="window.run()" value="Run">
+          <input type="button" onclick="window.step()" value="Step">
+          <input type="button" onclick="window.stop()" value="Stop">
+        </span>
+      </div>
+      <div style="float: left; margin-left: 15px;">
+        <div style="margin-bottom: 10px">
+          Registers: <br>
+          <div class="register">
+            <span>eax</span>
+            <input id="reg-eax" disabled />
+          </div>
+          <div class="register">
+            <span>ecx</span>
+            <input id="reg-ecx" disabled />
+          </div>
+          <div class="register">
+            <span>edx</span>
+            <input id="reg-edx" disabled />
+          </div>
+          <div class="register">
+            <span>ebx</span>
+            <input id="reg-ebx" disabled />
+          </div>
+          <div class="register">
+            <span>esi</span>
+            <input id="reg-esi" disabled />
+          </div>
+          <div class="register">
+            <span>edi</span>
+            <input id="reg-edi" disabled />
+          </div>
+          <div class="register">
+            <span>ebp</span>
+            <input id="reg-ebp" disabled />
+          </div>
+          <div class="register">
+            <span>esp</span>
+            <input id="reg-esp" disabled />
+          </div>
+          <div class="register">
+            <span>eip</span>
+            <input id="reg-eip" disabled />
+          </div>
+          <div class="register">
+            <span>eflags</span>
+            <input id="reg-eflags" disabled />
+          </div>
+        </div>
+        <div style="margin-bototm: 10px">
+          Flags: <br>
+          <div class="flag">
+            <span>CF</span>
+            <input type="checkbox" id="flag-cf" onchange="toggleFlag('CF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>PF</span>
+            <input type="checkbox" id="flag-pf" onchange="toggleFlag('PF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>AF</span>
+            <input type="checkbox" id="flag-af" onchange="toggleFlag('AF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>ZF</span>
+            <input type="checkbox" id="flag-zf" onchange="toggleFlag('ZF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>SF</span>
+            <input type="checkbox" id="flag-sf" onchange="toggleFlag('SF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>TF</span>
+            <input type="checkbox" id="flag-tf" onchange="toggleFlag('TF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>IF</span>
+            <input type="checkbox" id="flag-if" onchange="toggleFlag('IF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>DF</span>
+            <input type="checkbox" id="flag-df" onchange="toggleFlag('DF')" disabled/>
+          </div>
+          <div class="flag">
+            <span>OF</span>
+            <input type="checkbox" id="flag-of" onchange="toggleFlag('OF')" disabled/>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="bundle.js"></script>
   </body>
 </html>
