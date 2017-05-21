@@ -33,7 +33,7 @@ export default class MemoryManager {
   }
 
   readWord(addr: number): number {
-    const offset = getAddressOffset(addr);
+    let offset = getAddressOffset(addr);
     if ((offset & 0x3) != 0) {
       throw new SIGSEGV('malaligned address');
     }
@@ -53,7 +53,7 @@ export default class MemoryManager {
   }
 
   writeWord(addr: number, value: number): void {
-    const offset = getAddressOffset(addr);
+    let offset = getAddressOffset(addr);
     if ((offset & 0x3) != 0) {
       throw new SIGSEGV('malaligned address');
     }

@@ -1,30 +1,16 @@
+import {TEXT_MASK} from './address';
 import MemoryManager from './memory';
 import X86, {X86Flag} from './x86';
 
-let mem = new MemoryManager({
-  textLength: 65536,
-  stackLength: 65536,
-});
-
-let x86Machine = new X86(mem, {
-  eax: 0,
-  ecx: 0,
-  edx: 0,
-  ebx: 0,
-  esi: 0,
-  edi: 0,
-  ebp: 0,
-  esp: mem.getStackTopAddr(),
-  eip: mem.getTextBaseAddr(),
-  // lots of "always 1" flags
-  eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
-});
+let mem: MemoryManager = null;
+let x86Machine: X86 = null;
 
 function toHex(val: number): string {
   if (val < 0) {
     val = 0xFFFFFFFF + val + 1;
   }
-  return val.toString(16).toUpperCase();
+  const tmp = '00000000' + val.toString(16).toUpperCase();
+  return tmp.substring(tmp.length - 8);
 }
 
 function syncRegs(): void {
@@ -42,15 +28,42 @@ function syncRegs(): void {
 }
 
 function syncFlags(): void {
-  (<any> document).getElementById('reg-cf').checked = x86Machine.getFlag(X86Flag.CF);
-  (<any> document).getElementById('reg-pf').checked = x86Machine.getFlag(X86Flag.PF);
-  (<any> document).getElementById('reg-af').checked = x86Machine.getFlag(X86Flag.AF);
-  (<any> document).getElementById('reg-zf').checked = x86Machine.getFlag(X86Flag.ZF);
-  (<any> document).getElementById('reg-sf').checked = x86Machine.getFlag(X86Flag.SF);
-  (<any> document).getElementById('reg-tf').checked = x86Machine.getFlag(X86Flag.TF);
-  (<any> document).getElementById('reg-if').checked = x86Machine.getFlag(X86Flag.IF);
-  (<any> document).getElementById('reg-df').checked = x86Machine.getFlag(X86Flag.DF);
-  (<any> document).getElementById('reg-of').checked = x86Machine.getFlag(X86Flag.OF);
+  (<any> document).getElementById('flg-cf').checked = x86Machine.getFlag(X86Flag.CF);
+  (<any> document).getElementById('flg-pf').checked = x86Machine.getFlag(X86Flag.PF);
+  (<any> document).getElementById('flg-af').checked = x86Machine.getFlag(X86Flag.AF);
+  (<any> document).getElementById('flg-zf').checked = x86Machine.getFlag(X86Flag.ZF);
+  (<any> document).getElementById('flg-sf').checked = x86Machine.getFlag(X86Flag.SF);
+  (<any> document).getElementById('flg-tf').checked = x86Machine.getFlag(X86Flag.TF);
+  (<any> document).getElementById('flg-if').checked = x86Machine.getFlag(X86Flag.IF);
+  (<any> document).getElementById('flg-df').checked = x86Machine.getFlag(X86Flag.DF);
+  (<any> document).getElementById('flg-of').checked = x86Machine.getFlag(X86Flag.OF);
+}
+
+function init(src: string): void {
+  mem = new MemoryManager({
+    textLength: 65536,
+    stackLength: 65536,
+  });
+
+  x86Machine = new X86(mem, {
+    eax: 0,
+    ecx: 0,
+    edx: 0,
+    ebx: 0,
+    esi: 0,
+    edi: 0,
+    ebp: 0,
+    esp: mem.getStackTopAddr(),
+    eip: mem.getTextBaseAddr(),
+    // lots of "always 1" flags
+    eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
+  });
+
+  src = src.toUpperCase().replace(/[^\dA-F]/g, '');
+  const words = src.match(/.{1,8}/g);
+  for (let i = 0; i < words.length; ++i) {
+    mem.writeWord(TEXT_MASK | (i << 2), parseInt(words[i], 16));
+  }
 }
 
 function run(): void {
@@ -58,7 +71,12 @@ function run(): void {
 }
 
 function step(): void {
-
+  if (x86Machine == null) {
+    init((<any> document).getElementById('x86-src').value);
+  }
+  x86Machine.step();
+  syncRegs();
+  syncFlags();
 }
 
 function stop(): void {

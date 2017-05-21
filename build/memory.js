@@ -12,16 +12,20 @@ class MemoryManager {
         return address_2.TEXT_MASK;
     }
     getTextTopAddr() {
-        return address_2.TEXT_MASK + this.text.length;
+        return address_2.TEXT_MASK | (this.text.length << 2);
     }
     getStackBaseAddr() {
         return address_2.STACK_MASK;
     }
     getStackTopAddr() {
-        return address_2.STACK_MASK + this.stack.length;
+        return address_2.STACK_MASK | (this.stack.length << 2);
     }
     readWord(addr) {
-        const offset = address_1.getAddressOffset(addr);
+        let offset = address_1.getAddressOffset(addr);
+        if ((offset & 0x3) != 0) {
+            throw new sigsegv_1.default('malaligned address');
+        }
+        offset >>= 2;
         if (address_1.isTextAddress(addr)) {
             if (offset >= this.text.length) {
                 throw new sigsegv_1.default('text segment address out of bounds');
@@ -37,7 +41,11 @@ class MemoryManager {
         throw new sigsegv_1.default('bad address');
     }
     writeWord(addr, value) {
-        const offset = address_1.getAddressOffset(addr);
+        let offset = address_1.getAddressOffset(addr);
+        if ((offset & 0x3) != 0) {
+            throw new sigsegv_1.default('malaligned address');
+        }
+        offset >>= 2;
         if (address_1.isTextAddress(addr)) {
             if (offset >= this.text.length) {
                 throw new sigsegv_1.default('text segment address out of bounds');
