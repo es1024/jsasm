@@ -110,8 +110,8 @@ class X86 {
         }
     }
     nextInstByte() {
-        const tw = this.mem.readWord((this.regs[8] >> 2) << 2);
-        const offs = (~this.regs[8]) & 0x3;
+        const tw = this.mem.readWord(this.regs[8] & ~0x3);
+        const offs = this.regs[8] & 0x3;
         const op = (tw >> (offs << 3)) & 0xFF;
         ++this.regs[8];
         return op;

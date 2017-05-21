@@ -48,7 +48,9 @@ function init(src: string): void {
   src = src.toUpperCase().replace(/[^\dA-F]/g, '');
   const words = src.match(/.{1,8}/g);
   for (let i = 0; i < words.length; ++i) {
-    mem.writeWord(TEXT_MASK | (i << 2), parseInt(words[i], 16));
+    const tmp = words[i].match(/.{1,2}/g);
+    tmp.reverse();
+    mem.writeWord(TEXT_MASK | (i << 2), parseInt(tmp.join(''), 16));
   }
 
   x86Machine = new X86(mem, {

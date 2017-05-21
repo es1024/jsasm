@@ -116,8 +116,8 @@ export default class X86 {
   }
 
   private nextInstByte(): number {
-    const tw = this.mem.readWord((this.regs[<number> X86Reg.EIP] >> 2) << 2);
-    const offs = (~this.regs[<number> X86Reg.EIP]) & 0x3;
+    const tw = this.mem.readWord(this.regs[<number> X86Reg.EIP] & ~0x3);
+    const offs = this.regs[<number> X86Reg.EIP] & 0x3;
     const op = (tw >> (offs << 3)) & 0xFF;
     ++this.regs[<number> X86Reg.EIP];
 

@@ -164,7 +164,9 @@ function init(src) {
     src = src.toUpperCase().replace(/[^\dA-F]/g, '');
     const words = src.match(/.{1,8}/g);
     for (let i = 0; i < words.length; ++i) {
-        mem.writeWord(address_1.TEXT_MASK | (i << 2), parseInt(words[i], 16));
+        const tmp = words[i].match(/.{1,2}/g);
+        tmp.reverse();
+        mem.writeWord(address_1.TEXT_MASK | (i << 2), parseInt(tmp.join(''), 16));
     }
     x86Machine = new x86_1.default(mem, {
         eax: 0,
@@ -420,8 +422,8 @@ class X86 {
         }
     }
     nextInstByte() {
-        const tw = this.mem.readWord((this.regs[8] >> 2) << 2);
-        const offs = (~this.regs[8]) & 0x3;
+        const tw = this.mem.readWord(this.regs[8] & ~0x3);
+        const offs = this.regs[8] & 0x3;
         const op = (tw >> (offs << 3)) & 0xFF;
         ++this.regs[8];
         return op;
