@@ -19,3 +19,6 @@ then
     echo "webpack failed (error code: $rval)"
     exit 2
 fi
+
+cp -R src/static/* build/
+
