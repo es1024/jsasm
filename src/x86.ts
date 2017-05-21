@@ -102,13 +102,14 @@ export default class X86 {
     const d = !!(op & 0x02);
     const w = !!(op & 0x01);
     switch (op >> 2) {
-      case 0: this.processModRegRM(d, w, this.add); break;
-      case 2: this.processModRegRM(d, w, this.or); break;
-      case 4: this.processModRegRM(d, w, this.adc); break;
-      case 6: this.processModRegRM(d, w, this.sbb); break;
-      case 8: this.processModRegRM(d, w, this.and); break;
-      case 10: this.processModRegRM(d, w, this.sub); break;
-      case 12: this.processModRegRM(d, w, this.xor); break;
+      case 0: this.processModRegRM(d, w, true, this.add); break;
+      case 2: this.processModRegRM(d, w, true, this.or); break;
+      case 4: this.processModRegRM(d, w, true, this.adc); break;
+      case 6: this.processModRegRM(d, w, true, this.sbb); break;
+      case 8: this.processModRegRM(d, w, true, this.and); break;
+      case 10: this.processModRegRM(d, w, true, this.sub); break;
+      case 12: this.processModRegRM(d, w, true, this.xor); break;
+      case 14: this.processModRegRM(d, w, false, this.sub); break;
       default:
         throw new SIGILL('probably just unimplemented or something');
     }
@@ -123,7 +124,7 @@ export default class X86 {
     return op;
   }
 
-  private processModRegRM(d: boolean, w: boolean,
+  private processModRegRM(d: boolean, w: boolean, k: boolean,
       f: (a: number, b: number, w: boolean) => number): void {
     const modRM = this.nextInstByte();
     let reg = (modRM >> 3) & 0x7;
@@ -142,7 +143,10 @@ export default class X86 {
           RM = tmp;
         }
         if (w) {
-          this.regs[RM] = f(this.regs[RM], this.regs[reg], w);
+          const v = f(this.regs[RM], this.regs[reg], w);
+          if (k) {
+            this.regs[RM] = v;
+          }
         } else {
           const RMr = RM & 0x3;
           const regr = reg & 0x3;
@@ -150,7 +154,9 @@ export default class X86 {
           const regs = reg & 0x4;
           const tmp = f((this.regs[RMr] & (0xFF << RMs)) >> RMs,
               (this.regs[regr] & (0xFF << regs)) >> regs, w);
-          this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+          if (k) {
+            this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+          }
         }
       break;
     }
