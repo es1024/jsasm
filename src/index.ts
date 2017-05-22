@@ -93,7 +93,7 @@ function step(): void {
     x86Machine.step();
   } catch (e) {
     if (e instanceof SIGBASE) {
-      (<any> document).getElementById('x86-error').innerHTML = 
+      (<any> document).getElementById('x86-error').innerHTML =
           (<SIGBASE> e).sigtype() + ': ' + e.message;
       return;
     } else {

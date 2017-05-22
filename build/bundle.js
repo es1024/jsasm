@@ -572,6 +572,42 @@ class X86 {
             case 23:
                 this.regs[op & 0x7] = this.pushpop(this.regs[op & 0x7], 0, op >= 0x58);
                 break;
+            case 32:
+                if (!d) {
+                    this.processJump(w, (this.regs[9] & (1 << 11)) != 0);
+                }
+                else {
+                    this.processJump(w, (this.regs[9] & (1 << 0)) != 0);
+                }
+                break;
+            case 33:
+                if (!d) {
+                    this.processJump(w, (this.regs[9] & (1 << 6)) != 0);
+                }
+                else {
+                    this.processJump(w, (this.regs[9] & ((1 << 0) |
+                        (1 << 6))) != 0);
+                }
+                break;
+            case 34:
+                if (!d) {
+                    this.processJump(w, (this.regs[9] & (1 << 7)) != 0);
+                }
+                else {
+                    this.processJump(w, (this.regs[9] & (1 << 2)) != 0);
+                }
+                break;
+            case 35:
+                if (!d) {
+                    this.processJump(w, ((this.regs[9] & (1 << 7)) == 0)
+                        != ((this.regs[9] & (1 << 11)) == 0));
+                }
+                else {
+                    this.processJump(w, (this.regs[9] & (1 << 6)) != 0
+                        || ((this.regs[9] & (1 << 7)) == 0)
+                            != ((this.regs[9] & (1 << 11)) == 0));
+                }
+                break;
             default:
                 throw new sigill_1.default('probably just unimplemented or something');
         }
@@ -709,6 +745,16 @@ class X86 {
             if (k) {
                 this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
             }
+        }
+    }
+    processJump(negate, cond) {
+        let offset;
+        offset = this.nextInstByte();
+        if (offset > 127) {
+            offset -= 256;
+        }
+        if (negate != cond) {
+            this.regs[8] += offset;
         }
     }
     parity(a) {

@@ -217,6 +217,38 @@ export default class X86 {
       case 23:
         this.regs[op & 0x7] = this.pushpop(this.regs[op & 0x7], 0, op >= 0x58);
       break;
+      case 32:
+        if (!d) {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) != 0);
+        } else {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF)) != 0);
+        }
+      break;
+      case 33:
+        if (!d) {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.ZF)) != 0);
+        } else {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & ((1 << X86Flag.CF) |
+              (1 << X86Flag.ZF))) != 0);
+        }
+      break;
+      case 34:
+        if (!d) {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.SF)) != 0);
+        } else {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.PF)) != 0);
+        }
+      break;
+      case 35:
+        if (!d) {
+          this.processJump(w, ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.SF)) == 0)
+              != ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) == 0));
+        } else {
+          this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.ZF)) != 0
+              || ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.SF)) == 0)
+              != ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) == 0));
+        }
+      break;
       default:
         throw new SIGILL('probably just unimplemented or something');
     }
@@ -357,6 +389,17 @@ export default class X86 {
       if (k) {
         this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
       }
+    }
+  }
+
+  private processJump(negate: boolean, cond: boolean): void {
+    let offset: number;
+    offset = this.nextInstByte();
+    if (offset > 127) {
+      offset -= 256;
+    }
+    if (negate != cond) {
+      this.regs[X86Reg.EIP] += offset;
     }
   }
 
