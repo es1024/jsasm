@@ -6,6 +6,9 @@ class SIGILL extends sigbase_1.default {
         super(m);
         Object.setPrototypeOf(this, SIGILL.prototype);
     }
+    sigtype() {
+        return 'SIGILL';
+    }
 }
 exports.default = SIGILL;
 //# sourceMappingURL=sigill.js.map

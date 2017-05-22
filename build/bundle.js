@@ -109,6 +109,9 @@ class SIGBASE extends Error {
         super(m);
         Object.setPrototypeOf(this, SIGBASE.prototype);
     }
+    sigtype() {
+        return 'SIGBASE (this should not happen)';
+    }
 }
 exports.default = SIGBASE;
 
@@ -122,6 +125,7 @@ exports.default = SIGBASE;
 Object.defineProperty(exports, "__esModule", { value: true });
 const address_1 = __webpack_require__(0);
 const memory_1 = __webpack_require__(5);
+const sigbase_1 = __webpack_require__(1);
 const x86_1 = __webpack_require__(6);
 let mem = null;
 let x86Machine = null;
@@ -194,20 +198,44 @@ function init(src) {
     });
 }
 function run() {
+    document.getElementById('x86-error').innerHTML = 'unimplemented';
 }
 function step() {
     if (x86Machine == null) {
         init(document.getElementById('x86-src').value);
     }
-    x86Machine.step();
+    try {
+        x86Machine.step();
+    }
+    catch (e) {
+        if (e instanceof sigbase_1.default) {
+            document.getElementById('x86-error').innerHTML =
+                e.sigtype() + ': ' + e.message;
+            return;
+        }
+        else {
+            document.getElementById('x86-error').innerHTML = 'Unknown error';
+            throw e;
+        }
+    }
     syncRegs();
     syncFlags();
 }
 function stop() {
+    document.getElementById('x86-error').innerHTML = 'unimplemented';
+}
+function reset() {
+    x86Machine = null;
+    init(document.getElementById('x86-src').value);
+    syncRegs();
+    syncFlags();
+    x86Machine = null;
+    document.getElementById('x86-error').innerHTML = '';
 }
 window.run = run;
 window.step = step;
 window.stop = stop;
+window.reset = reset;
 
 
 /***/ }),
@@ -222,6 +250,9 @@ class SIGILL extends sigbase_1.default {
     constructor(m) {
         super(m);
         Object.setPrototypeOf(this, SIGILL.prototype);
+    }
+    sigtype() {
+        return 'SIGILL';
     }
 }
 exports.default = SIGILL;
@@ -239,6 +270,9 @@ class SIGSEGV extends sigbase_1.default {
     constructor(m) {
         super(m);
         Object.setPrototypeOf(this, SIGSEGV.prototype);
+    }
+    sigtype() {
+        return 'SIGSEGV';
     }
 }
 exports.default = SIGSEGV;

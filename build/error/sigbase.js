@@ -5,6 +5,9 @@ class SIGBASE extends Error {
         super(m);
         Object.setPrototypeOf(this, SIGBASE.prototype);
     }
+    sigtype() {
+        return 'SIGBASE (this should not happen)';
+    }
 }
 exports.default = SIGBASE;
 //# sourceMappingURL=sigbase.js.map

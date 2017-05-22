@@ -5,6 +5,10 @@ export default class SIGILL extends SIGBASE {
     super(m);
     Object.setPrototypeOf(this, SIGILL.prototype);
   }
+
+  sigtype(): string {
+    return 'SIGILL';
+  }
 }
 
 

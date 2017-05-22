@@ -6,6 +6,9 @@ class SIGSEGV extends sigbase_1.default {
         super(m);
         Object.setPrototypeOf(this, SIGSEGV.prototype);
     }
+    sigtype() {
+        return 'SIGSEGV';
+    }
 }
 exports.default = SIGSEGV;
 //# sourceMappingURL=sigsegv.js.map

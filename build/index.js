@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const address_1 = require("./address");
 const memory_1 = require("./memory");
+const sigbase_1 = require("./error/sigbase");
 const x86_1 = require("./x86");
 let mem = null;
 let x86Machine = null;
@@ -74,18 +75,42 @@ function init(src) {
     });
 }
 function run() {
+    document.getElementById('x86-error').innerHTML = 'unimplemented';
 }
 function step() {
     if (x86Machine == null) {
         init(document.getElementById('x86-src').value);
     }
-    x86Machine.step();
+    try {
+        x86Machine.step();
+    }
+    catch (e) {
+        if (e instanceof sigbase_1.default) {
+            document.getElementById('x86-error').innerHTML =
+                e.sigtype() + ': ' + e.message;
+            return;
+        }
+        else {
+            document.getElementById('x86-error').innerHTML = 'Unknown error';
+            throw e;
+        }
+    }
     syncRegs();
     syncFlags();
 }
 function stop() {
+    document.getElementById('x86-error').innerHTML = 'unimplemented';
+}
+function reset() {
+    x86Machine = null;
+    init(document.getElementById('x86-src').value);
+    syncRegs();
+    syncFlags();
+    x86Machine = null;
+    document.getElementById('x86-error').innerHTML = '';
 }
 window.run = run;
 window.step = step;
 window.stop = stop;
+window.reset = reset;
 //# sourceMappingURL=index.js.map

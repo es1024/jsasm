@@ -31,8 +31,11 @@
         <span style="float: right">
           <input type="button" onclick="window.run()" value="Run">
           <input type="button" onclick="window.step()" value="Step">
-          <input type="button" onclick="window.stop()" value="Stop">
+          <input type="button" onclick="window.stop()" value="Stop" disabled>
+          <input type="button" onclick="window.reset()" value="Reset">
         </span>
+        
+        <span style="color: red; clear: both" id="x86-error"></span>
       </div>
       <div style="float: left; margin-left: 15px;">
         <div style="margin-bottom: 10px">

@@ -1,5 +1,6 @@
 import {TEXT_MASK} from './address';
 import MemoryManager from './memory';
+import SIGBASE from './error/sigbase';
 import X86, {X86Flag} from './x86';
 
 let mem: MemoryManager = null;
@@ -81,23 +82,44 @@ function init(src: string): void {
 }
 
 function run(): void {
-
+  (<any> document).getElementById('x86-error').innerHTML = 'unimplemented';
 }
 
 function step(): void {
   if (x86Machine == null) {
     init((<any> document).getElementById('x86-src').value);
   }
-  x86Machine.step();
+  try {
+    x86Machine.step();
+  } catch (e) {
+    if (e instanceof SIGBASE) {
+      (<any> document).getElementById('x86-error').innerHTML = 
+          (<SIGBASE> e).sigtype() + ': ' + e.message;
+      return;
+    } else {
+      (<any> document).getElementById('x86-error').innerHTML = 'Unknown error';
+      throw e;
+    }
+  }
   syncRegs();
   syncFlags();
 }
 
 function stop(): void {
+  (<any> document).getElementById('x86-error').innerHTML = 'unimplemented';
+}
 
+function reset(): void {
+  x86Machine = null;
+  init((<any> document).getElementById('x86-src').value);
+  syncRegs();
+  syncFlags();
+  x86Machine = null;
+  (<any> document).getElementById('x86-error').innerHTML = '';
 }
 
 (<any> window).run = run;
 (<any> window).step = step;
 (<any> window).stop = stop;
+(<any> window).reset = reset;
 

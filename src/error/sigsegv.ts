@@ -5,5 +5,9 @@ export default class SIGSEGV extends SIGBASE {
     super(m);
     Object.setPrototypeOf(this, SIGSEGV.prototype);
   }
+
+  sigtype(): string {
+    return 'SIGSEGV';
+  }
 }
 
