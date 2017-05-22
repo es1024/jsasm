@@ -135,18 +135,69 @@ export default class X86 {
       case 0: this.processModRegRM(d, w, true, this.add); break;
       case 1:
         if (!d) {
-          this.processImm(w, 0, this.add);
+          this.processImm(w, 0, true, this.add);
         } else {
           this.sregs[X86SReg.ES] = this.pushpop(this.sregs[X86SReg.ES], 0, w);
         }
       break;
       case 2: this.processModRegRM(d, w, true, this.or); break;
+      case 3:
+        if (!d) {
+          this.processImm(w, 0, true, this.or);
+        } else if (!w) {
+          this.pushpop(this.sregs[X86SReg.CS], 0, false);
+        } else {
+          throw new SIGILL('multibyte ops not implemented');
+        }
+      break;
       case 4: this.processModRegRM(d, w, true, this.adc); break;
+      case 5:
+        if (!d) {
+          this.processImm(w, 0, true, this.adc);
+        } else {
+          this.sregs[X86SReg.SS] = this.pushpop(this.sregs[X86SReg.SS], 0, w);
+        }
+      break;
       case 6: this.processModRegRM(d, w, true, this.sbb); break;
+      case 7:
+        if (!d) {
+          this.processImm(w, 0, true, this.sbb);
+        } else {
+          this.sregs[X86SReg.DS] = this.pushpop(this.sregs[X86SReg.DS], 0, w);
+        }
+      break;
       case 8: this.processModRegRM(d, w, true, this.and); break;
+      case 9:
+        if (!d) {
+          this.processImm(w, 0, true, this.and);
+        } else {
+          throw new SIGILL('unimplemented');
+        }
+      break;
       case 10: this.processModRegRM(d, w, true, this.sub); break;
+      case 11:
+        if (!d) {
+          this.processImm(w, 0, true, this.sub);
+        } else {
+          throw new SIGILL('unimplemented');
+        }
+      break;
       case 12: this.processModRegRM(d, w, true, this.xor); break;
+      case 13:
+        if (!d) {
+          this.processImm(w, 0, true, this.xor);
+        } else {
+          throw new SIGILL('unimplemented');
+        }
+      break;
       case 14: this.processModRegRM(d, w, false, this.sub); break;
+      case 15:
+        if (!d) {
+          this.processImm(w, 0, false, this.sub);
+        } else {
+          throw new SIGILL('unimplemented');
+        }
+      break;
       default:
         throw new SIGILL('probably just unimplemented or something');
     }
@@ -268,20 +319,25 @@ export default class X86 {
     }
   }
 
-  private processImm(w: boolean, reg: number,
+  private processImm(w: boolean, reg: number, k: boolean,
       f: (a: number, b: number, w: boolean) => number): void {
     if (w) {
       let imm = this.nextInstByte();
       imm |= this.nextInstByte() << 8;
       imm |= this.nextInstByte() << 16;
       imm |= this.nextInstByte() << 24;
-      this.regs[reg] = f(this.regs[reg], imm, w);
+      let v = f(this.regs[reg], imm, w);
+      if (k) {
+        this.regs[reg] = v;
+      }
     } else {
       const imm = this.nextInstByte();
       const regr = reg & 0x3;
       const regs = reg & 0x4;
       const tmp = f((this.regs[regr] & (0xFF << regs)) >> regs, imm, w);
-      this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+      if (k) {
+        this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+      }
     }
   }
 

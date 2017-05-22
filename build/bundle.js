@@ -433,7 +433,7 @@ class X86 {
                 break;
             case 1:
                 if (!d) {
-                    this.processImm(w, 0, this.add);
+                    this.processImm(w, 0, true, this.add);
                 }
                 else {
                     this.sregs[0] = this.pushpop(this.sregs[0], 0, w);
@@ -442,23 +442,82 @@ class X86 {
             case 2:
                 this.processModRegRM(d, w, true, this.or);
                 break;
+            case 3:
+                if (!d) {
+                    this.processImm(w, 0, true, this.or);
+                }
+                else if (!w) {
+                    this.pushpop(this.sregs[1], 0, false);
+                }
+                else {
+                    throw new sigill_1.default('multibyte ops not implemented');
+                }
+                break;
             case 4:
                 this.processModRegRM(d, w, true, this.adc);
+                break;
+            case 5:
+                if (!d) {
+                    this.processImm(w, 0, true, this.adc);
+                }
+                else {
+                    this.sregs[2] = this.pushpop(this.sregs[2], 0, w);
+                }
                 break;
             case 6:
                 this.processModRegRM(d, w, true, this.sbb);
                 break;
+            case 7:
+                if (!d) {
+                    this.processImm(w, 0, true, this.sbb);
+                }
+                else {
+                    this.sregs[3] = this.pushpop(this.sregs[3], 0, w);
+                }
+                break;
             case 8:
                 this.processModRegRM(d, w, true, this.and);
+                break;
+            case 9:
+                if (!d) {
+                    this.processImm(w, 0, true, this.and);
+                }
+                else {
+                    throw new sigill_1.default('unimplemented');
+                }
                 break;
             case 10:
                 this.processModRegRM(d, w, true, this.sub);
                 break;
+            case 11:
+                if (!d) {
+                    this.processImm(w, 0, true, this.sub);
+                }
+                else {
+                    throw new sigill_1.default('unimplemented');
+                }
+                break;
             case 12:
                 this.processModRegRM(d, w, true, this.xor);
                 break;
+            case 13:
+                if (!d) {
+                    this.processImm(w, 0, true, this.xor);
+                }
+                else {
+                    throw new sigill_1.default('unimplemented');
+                }
+                break;
             case 14:
                 this.processModRegRM(d, w, false, this.sub);
+                break;
+            case 15:
+                if (!d) {
+                    this.processImm(w, 0, false, this.sub);
+                }
+                else {
+                    throw new sigill_1.default('unimplemented');
+                }
                 break;
             default:
                 throw new sigill_1.default('probably just unimplemented or something');
@@ -578,20 +637,25 @@ class X86 {
                 break;
         }
     }
-    processImm(w, reg, f) {
+    processImm(w, reg, k, f) {
         if (w) {
             let imm = this.nextInstByte();
             imm |= this.nextInstByte() << 8;
             imm |= this.nextInstByte() << 16;
             imm |= this.nextInstByte() << 24;
-            this.regs[reg] = f(this.regs[reg], imm, w);
+            let v = f(this.regs[reg], imm, w);
+            if (k) {
+                this.regs[reg] = v;
+            }
         }
         else {
             const imm = this.nextInstByte();
             const regr = reg & 0x3;
             const regs = reg & 0x4;
             const tmp = f((this.regs[regr] & (0xFF << regs)) >> regs, imm, w);
-            this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+            if (k) {
+                this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+            }
         }
     }
     parity(a) {
