@@ -103,6 +103,7 @@ class X86 {
         const op = this.nextInstByte();
         const d = !!(op & 0x02);
         const w = !!(op & 0x01);
+        let tmp;
         switch (op >> 2) {
             case 0:
                 this.processModRegRM(d, w, true, this.add);
@@ -194,6 +195,24 @@ class X86 {
                 else {
                     throw new sigill_1.default('unimplemented');
                 }
+                break;
+            case 16:
+            case 17:
+                tmp = this.regs[9] & (1 << 0);
+                this.regs[op & 0x7] = this.add(this.regs[op & 0x7], 1, true);
+                this.regs[9] |= tmp;
+                break;
+            case 18:
+            case 19:
+                tmp = this.regs[9] & (1 << 0);
+                this.regs[op & 0x7] = this.sub(this.regs[op & 0x7], 1, true);
+                this.regs[9] |= tmp;
+                break;
+            case 20:
+            case 21:
+            case 22:
+            case 23:
+                this.regs[op & 0x7] = this.pushpop(this.regs[op & 0x7], 0, op >= 0x58);
                 break;
             default:
                 throw new sigill_1.default('probably just unimplemented or something');
@@ -399,8 +418,8 @@ class X86 {
         this.regs[9] |= this.parity(a) << 2;
         return r;
     }
-    pushpop(a, _, pull) {
-        if (!pull) {
+    pushpop(a, _, pop) {
+        if (!pop) {
             this.regs[4] -= 4;
             if ((this.regs[4] & 0x3) == 0) {
                 this.mem.writeWord(this.regs[4], a);

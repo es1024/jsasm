@@ -131,6 +131,7 @@ export default class X86 {
     const op = this.nextInstByte();
     const d = !!(op & 0x02);
     const w = !!(op & 0x01);
+    let tmp: number;
     switch (op >> 2) {
       case 0: this.processModRegRM(d, w, true, this.add); break;
       case 1:
@@ -197,6 +198,24 @@ export default class X86 {
         } else {
           throw new SIGILL('unimplemented');
         }
+      break;
+      case 16:
+      case 17:
+        tmp = this.regs[<number> X86Reg.EFLAGS] & (1 << <number> X86Flag.CF);       
+        this.regs[op & 0x7] = this.add(this.regs[op & 0x7], 1, true);
+        this.regs[<number> X86Reg.EFLAGS] |= tmp;
+      break;
+      case 18:
+      case 19:
+        tmp = this.regs[<number> X86Reg.EFLAGS] & (1 << <number> X86Flag.CF);       
+        this.regs[op & 0x7] = this.sub(this.regs[op & 0x7], 1, true);
+        this.regs[<number> X86Reg.EFLAGS] |= tmp;
+      break;
+      case 20:
+      case 21:
+      case 22:
+      case 23:
+        this.regs[op & 0x7] = this.pushpop(this.regs[op & 0x7], 0, op >= 0x58);
       break;
       default:
         throw new SIGILL('probably just unimplemented or something');
@@ -414,8 +433,8 @@ export default class X86 {
     return r;
   }
 
-  private pushpop(a: number, _: number, pull: boolean): number {
-    if (!pull) {
+  private pushpop(a: number, _: number, pop: boolean): number {
+    if (!pop) {
       this.regs[X86Reg.ESP] -= 4;
       if ((this.regs[X86Reg.ESP] & 0x3) == 0) {
         this.mem.writeWord(this.regs[X86Reg.ESP], a);
