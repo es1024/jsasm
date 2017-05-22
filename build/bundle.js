@@ -396,6 +396,14 @@ class X86 {
             case 0:
                 this.processModRegRM(d, w, true, this.add);
                 break;
+            case 1:
+                if (!d) {
+                    this.processImm(w, 0, this.add);
+                }
+                else {
+                    throw new sigill_1.default('push/pop es not implemented');
+                }
+                break;
             case 2:
                 this.processModRegRM(d, w, true, this.or);
                 break;
@@ -449,20 +457,20 @@ class X86 {
         }
         switch (mod) {
             case 2:
-                offset &= this.nextInstByte();
-                offset &= this.nextInstByte() << 8;
-                offset &= this.nextInstByte() << 16;
+                offset |= this.nextInstByte();
+                offset |= this.nextInstByte() << 8;
+                offset |= this.nextInstByte() << 16;
             case 1:
-                offset &= this.nextInstByte() << 24;
+                offset |= this.nextInstByte() << 24;
                 if (mod == 1) {
                     offset >>= 24;
                 }
             case 0:
                 if (base == 6 && mod == 0) {
-                    addr &= this.nextInstByte();
-                    addr &= this.nextInstByte() << 8;
-                    addr &= this.nextInstByte() << 16;
-                    addr &= this.nextInstByte() << 24;
+                    addr |= this.nextInstByte();
+                    addr |= this.nextInstByte() << 8;
+                    addr |= this.nextInstByte() << 16;
+                    addr |= this.nextInstByte() << 24;
                 }
                 else {
                     addr = this.regs[base] + offset;
@@ -529,10 +537,26 @@ class X86 {
                     const regs = reg & 0x4;
                     const tmp = f((this.regs[RMr] & (0xFF << RMs)) >> RMs, (this.regs[regr] & (0xFF << regs)) >> regs, w);
                     if (k) {
-                        this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+                        this.regs[RMr] = (this.regs[RMr] & ~(0xFF << RMs)) | tmp << RMs;
                     }
                 }
                 break;
+        }
+    }
+    processImm(w, reg, f) {
+        if (w) {
+            let imm = this.nextInstByte();
+            imm |= this.nextInstByte() << 8;
+            imm |= this.nextInstByte() << 16;
+            imm |= this.nextInstByte() << 24;
+            this.regs[reg] = f(this.regs[reg], imm, w);
+        }
+        else {
+            const imm = this.nextInstByte();
+            const regr = reg & 0x3;
+            const regs = reg & 0x4;
+            const tmp = f((this.regs[regr] & (0xFF << regs)) >> regs, imm, w);
+            this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
         }
     }
     parity(a) {
