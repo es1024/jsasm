@@ -5,26 +5,32 @@ import X86, {X86Flag} from './x86';
 let mem: MemoryManager = null;
 let x86Machine: X86 = null;
 
-function toHex(val: number): string {
+function toHex(val: number, minlen: number): string {
   if (val < 0) {
     val = 0xFFFFFFFF + val + 1;
   }
   const tmp = '00000000' + val.toString(16).toUpperCase();
-  return tmp.substring(tmp.length - 8);
+  return tmp.substring(tmp.length - minlen);
 }
 
 function syncRegs(): void {
   const regs = x86Machine.getRegisters();
-  (<any> document).getElementById('reg-eax').value = toHex(regs.eax);
-  (<any> document).getElementById('reg-ecx').value = toHex(regs.ecx);
-  (<any> document).getElementById('reg-edx').value = toHex(regs.edx);
-  (<any> document).getElementById('reg-ebx').value = toHex(regs.ebx);
-  (<any> document).getElementById('reg-esi').value = toHex(regs.esi);
-  (<any> document).getElementById('reg-edi').value = toHex(regs.edi);
-  (<any> document).getElementById('reg-ebp').value = toHex(regs.ebp);
-  (<any> document).getElementById('reg-esp').value = toHex(regs.esp);
-  (<any> document).getElementById('reg-eip').value = toHex(regs.eip);
-  (<any> document).getElementById('reg-eflags').value = toHex(regs.eflags);
+  (<any> document).getElementById('reg-eax').value = toHex(regs.eax, 8);
+  (<any> document).getElementById('reg-ecx').value = toHex(regs.ecx, 8);
+  (<any> document).getElementById('reg-edx').value = toHex(regs.edx, 8);
+  (<any> document).getElementById('reg-ebx').value = toHex(regs.ebx, 8);
+  (<any> document).getElementById('reg-esi').value = toHex(regs.esi, 8);
+  (<any> document).getElementById('reg-edi').value = toHex(regs.edi, 8);
+  (<any> document).getElementById('reg-ebp').value = toHex(regs.ebp, 8);
+  (<any> document).getElementById('reg-esp').value = toHex(regs.esp, 8);
+  (<any> document).getElementById('reg-eip').value = toHex(regs.eip, 8);
+  (<any> document).getElementById('reg-eflags').value = toHex(regs.eflags, 8);
+  (<any> document).getElementById('reg-es').value = toHex(regs.es, 4);
+  (<any> document).getElementById('reg-cs').value = toHex(regs.cs, 4);
+  (<any> document).getElementById('reg-ss').value = toHex(regs.ss, 4);
+  (<any> document).getElementById('reg-ds').value = toHex(regs.ds, 4);
+  (<any> document).getElementById('reg-fs').value = toHex(regs.fs, 4);
+  (<any> document).getElementById('reg-gs').value = toHex(regs.gs, 4);
 }
 
 function syncFlags(): void {
@@ -65,6 +71,12 @@ function init(src: string): void {
     eip: mem.getTextBaseAddr(),
     // lots of "always 1" flags
     eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
+    es: 0,
+    cs: 0,
+    ss: 0,
+    ds: 0,
+    fs: 0,
+    gs: 0,
   });
 }
 

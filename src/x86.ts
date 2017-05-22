@@ -12,6 +12,12 @@ export interface X86Registers {
   edi: number;
   eip: number;
   eflags: number;
+  es: number;
+  cs: number;
+  ss: number;
+  ds: number;
+  fs: number;
+  gs: number;
 }
 
 export const enum X86Flag {
@@ -39,12 +45,22 @@ const enum X86Reg {
   EFLAGS = 9,
 }
 
+const enum X86SReg {
+  ES = 0,
+  CS = 1,
+  SS = 2,
+  DS = 3,
+  FS = 4,
+  GS = 5,
+}
+
 const ARITH_FLAG_CLEAR = ~((1 << <number>X86Flag.OF) | (1 << <number>X86Flag.SF) |
     (1 << <number>X86Flag.ZF) | (1 << <number>X86Flag.AF) |
     (1 << <number>X86Flag.PF) | (1 << <number>X86Flag.CF));
 
 export default class X86 {
   private regs: Uint32Array;
+  private sregs: Uint16Array;
   private mem: MemoryManager;
 
   constructor(mem: MemoryManager, regs: X86Registers) {
@@ -60,6 +76,13 @@ export default class X86 {
     this.regs[<number> X86Reg.EDI] = regs.edi;
     this.regs[<number> X86Reg.EIP] = regs.eip;
     this.regs[<number> X86Reg.EFLAGS] = regs.eflags;
+    this.sregs = new Uint16Array(6);
+    this.sregs[<number> X86SReg.ES] = regs.es;
+    this.sregs[<number> X86SReg.CS] = regs.cs;
+    this.sregs[<number> X86SReg.SS] = regs.ss;
+    this.sregs[<number> X86SReg.DS] = regs.ds;
+    this.sregs[<number> X86SReg.FS] = regs.fs;
+    this.sregs[<number> X86SReg.GS] = regs.gs;
 
     this.add = this.add.bind(this);
     this.or = this.or.bind(this);
@@ -68,6 +91,7 @@ export default class X86 {
     this.and = this.and.bind(this);
     this.sub = this.sub.bind(this);
     this.xor = this.xor.bind(this);
+    this.pushpop = this.pushpop.bind(this);
   }
 
   getRegisters(): X86Registers {
@@ -82,6 +106,12 @@ export default class X86 {
       edi: this.regs[<number> X86Reg.EDI],
       eip: this.regs[<number> X86Reg.EIP],
       eflags: this.regs[<number> X86Reg.EFLAGS],
+      es: this.sregs[<number> X86SReg.ES],
+      cs: this.sregs[<number> X86SReg.CS],
+      ss: this.sregs[<number> X86SReg.SS],
+      ds: this.sregs[<number> X86SReg.DS],
+      fs: this.sregs[<number> X86SReg.FS],
+      gs: this.sregs[<number> X86SReg.GS],
     };
   }
 
@@ -107,7 +137,7 @@ export default class X86 {
         if (!d) {
           this.processImm(w, 0, this.add);
         } else {
-          throw new SIGILL('push/pop es not implemented');
+          this.sregs[X86SReg.ES] = this.pushpop(this.sregs[X86SReg.ES], 0, w);
         }
       break;
       case 2: this.processModRegRM(d, w, true, this.or); break;
@@ -326,6 +356,23 @@ export default class X86 {
     this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
     this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
     return r;
+  }
+
+  private pushpop(a: number, _: number, pull: boolean): number {
+    if (!pull) {
+      this.regs[X86Reg.ESP] -= 4;
+      if ((this.regs[X86Reg.ESP] & 0x3) == 0) {
+        this.mem.writeWord(this.regs[X86Reg.ESP], a);
+      }
+      return a;
+    } else {
+      let value = 0;
+      if ((this.regs[X86Reg.ESP] & 0x3) == 0) {
+        value = this.mem.readWord(this.regs[X86Reg.ESP]);
+      }
+      this.regs[X86Reg.ESP] += 4;
+      return value;
+    }
   }
 }
 

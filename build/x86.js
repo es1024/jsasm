@@ -26,6 +26,15 @@ var X86Reg;
     X86Reg[X86Reg["EIP"] = 8] = "EIP";
     X86Reg[X86Reg["EFLAGS"] = 9] = "EFLAGS";
 })(X86Reg || (X86Reg = {}));
+var X86SReg;
+(function (X86SReg) {
+    X86SReg[X86SReg["ES"] = 0] = "ES";
+    X86SReg[X86SReg["CS"] = 1] = "CS";
+    X86SReg[X86SReg["SS"] = 2] = "SS";
+    X86SReg[X86SReg["DS"] = 3] = "DS";
+    X86SReg[X86SReg["FS"] = 4] = "FS";
+    X86SReg[X86SReg["GS"] = 5] = "GS";
+})(X86SReg || (X86SReg = {}));
 const ARITH_FLAG_CLEAR = ~((1 << 11) | (1 << 7) |
     (1 << 6) | (1 << 4) |
     (1 << 2) | (1 << 0));
@@ -43,6 +52,13 @@ class X86 {
         this.regs[7] = regs.edi;
         this.regs[8] = regs.eip;
         this.regs[9] = regs.eflags;
+        this.sregs = new Uint16Array(6);
+        this.sregs[0] = regs.es;
+        this.sregs[1] = regs.cs;
+        this.sregs[2] = regs.ss;
+        this.sregs[3] = regs.ds;
+        this.sregs[4] = regs.fs;
+        this.sregs[5] = regs.gs;
         this.add = this.add.bind(this);
         this.or = this.or.bind(this);
         this.adc = this.adc.bind(this);
@@ -50,6 +66,7 @@ class X86 {
         this.and = this.and.bind(this);
         this.sub = this.sub.bind(this);
         this.xor = this.xor.bind(this);
+        this.pushpop = this.pushpop.bind(this);
     }
     getRegisters() {
         return {
@@ -63,6 +80,12 @@ class X86 {
             edi: this.regs[7],
             eip: this.regs[8],
             eflags: this.regs[9],
+            es: this.sregs[0],
+            cs: this.sregs[1],
+            ss: this.sregs[2],
+            ds: this.sregs[3],
+            fs: this.sregs[4],
+            gs: this.sregs[5],
         };
     }
     setFlag(flag, value) {
@@ -89,7 +112,7 @@ class X86 {
                     this.processImm(w, 0, this.add);
                 }
                 else {
-                    throw new sigill_1.default('push/pop es not implemented');
+                    this.sregs[0] = this.pushpop(this.sregs[0], 0, w);
                 }
                 break;
             case 2:
@@ -311,6 +334,23 @@ class X86 {
         this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
         this.regs[9] |= this.parity(a) << 2;
         return r;
+    }
+    pushpop(a, _, pull) {
+        if (!pull) {
+            this.regs[4] -= 4;
+            if ((this.regs[4] & 0x3) == 0) {
+                this.mem.writeWord(this.regs[4], a);
+            }
+            return a;
+        }
+        else {
+            let value = 0;
+            if ((this.regs[4] & 0x3) == 0) {
+                value = this.mem.readWord(this.regs[4]);
+            }
+            this.regs[4] += 4;
+            return value;
+        }
     }
 }
 exports.default = X86;

@@ -5,25 +5,31 @@ const memory_1 = require("./memory");
 const x86_1 = require("./x86");
 let mem = null;
 let x86Machine = null;
-function toHex(val) {
+function toHex(val, minlen) {
     if (val < 0) {
         val = 0xFFFFFFFF + val + 1;
     }
     const tmp = '00000000' + val.toString(16).toUpperCase();
-    return tmp.substring(tmp.length - 8);
+    return tmp.substring(tmp.length - minlen);
 }
 function syncRegs() {
     const regs = x86Machine.getRegisters();
-    document.getElementById('reg-eax').value = toHex(regs.eax);
-    document.getElementById('reg-ecx').value = toHex(regs.ecx);
-    document.getElementById('reg-edx').value = toHex(regs.edx);
-    document.getElementById('reg-ebx').value = toHex(regs.ebx);
-    document.getElementById('reg-esi').value = toHex(regs.esi);
-    document.getElementById('reg-edi').value = toHex(regs.edi);
-    document.getElementById('reg-ebp').value = toHex(regs.ebp);
-    document.getElementById('reg-esp').value = toHex(regs.esp);
-    document.getElementById('reg-eip').value = toHex(regs.eip);
-    document.getElementById('reg-eflags').value = toHex(regs.eflags);
+    document.getElementById('reg-eax').value = toHex(regs.eax, 8);
+    document.getElementById('reg-ecx').value = toHex(regs.ecx, 8);
+    document.getElementById('reg-edx').value = toHex(regs.edx, 8);
+    document.getElementById('reg-ebx').value = toHex(regs.ebx, 8);
+    document.getElementById('reg-esi').value = toHex(regs.esi, 8);
+    document.getElementById('reg-edi').value = toHex(regs.edi, 8);
+    document.getElementById('reg-ebp').value = toHex(regs.ebp, 8);
+    document.getElementById('reg-esp').value = toHex(regs.esp, 8);
+    document.getElementById('reg-eip').value = toHex(regs.eip, 8);
+    document.getElementById('reg-eflags').value = toHex(regs.eflags, 8);
+    document.getElementById('reg-es').value = toHex(regs.es, 4);
+    document.getElementById('reg-cs').value = toHex(regs.cs, 4);
+    document.getElementById('reg-ss').value = toHex(regs.ss, 4);
+    document.getElementById('reg-ds').value = toHex(regs.ds, 4);
+    document.getElementById('reg-fs').value = toHex(regs.fs, 4);
+    document.getElementById('reg-gs').value = toHex(regs.gs, 4);
 }
 function syncFlags() {
     document.getElementById('flg-cf').checked = x86Machine.getFlag(0);
@@ -59,6 +65,12 @@ function init(src) {
         esp: mem.getStackTopAddr(),
         eip: mem.getTextBaseAddr(),
         eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
+        es: 0,
+        cs: 0,
+        ss: 0,
+        ds: 0,
+        fs: 0,
+        gs: 0,
     });
 }
 function run() {

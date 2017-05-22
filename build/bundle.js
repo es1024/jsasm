@@ -125,25 +125,31 @@ const memory_1 = __webpack_require__(5);
 const x86_1 = __webpack_require__(6);
 let mem = null;
 let x86Machine = null;
-function toHex(val) {
+function toHex(val, minlen) {
     if (val < 0) {
         val = 0xFFFFFFFF + val + 1;
     }
     const tmp = '00000000' + val.toString(16).toUpperCase();
-    return tmp.substring(tmp.length - 8);
+    return tmp.substring(tmp.length - minlen);
 }
 function syncRegs() {
     const regs = x86Machine.getRegisters();
-    document.getElementById('reg-eax').value = toHex(regs.eax);
-    document.getElementById('reg-ecx').value = toHex(regs.ecx);
-    document.getElementById('reg-edx').value = toHex(regs.edx);
-    document.getElementById('reg-ebx').value = toHex(regs.ebx);
-    document.getElementById('reg-esi').value = toHex(regs.esi);
-    document.getElementById('reg-edi').value = toHex(regs.edi);
-    document.getElementById('reg-ebp').value = toHex(regs.ebp);
-    document.getElementById('reg-esp').value = toHex(regs.esp);
-    document.getElementById('reg-eip').value = toHex(regs.eip);
-    document.getElementById('reg-eflags').value = toHex(regs.eflags);
+    document.getElementById('reg-eax').value = toHex(regs.eax, 8);
+    document.getElementById('reg-ecx').value = toHex(regs.ecx, 8);
+    document.getElementById('reg-edx').value = toHex(regs.edx, 8);
+    document.getElementById('reg-ebx').value = toHex(regs.ebx, 8);
+    document.getElementById('reg-esi').value = toHex(regs.esi, 8);
+    document.getElementById('reg-edi').value = toHex(regs.edi, 8);
+    document.getElementById('reg-ebp').value = toHex(regs.ebp, 8);
+    document.getElementById('reg-esp').value = toHex(regs.esp, 8);
+    document.getElementById('reg-eip').value = toHex(regs.eip, 8);
+    document.getElementById('reg-eflags').value = toHex(regs.eflags, 8);
+    document.getElementById('reg-es').value = toHex(regs.es, 4);
+    document.getElementById('reg-cs').value = toHex(regs.cs, 4);
+    document.getElementById('reg-ss').value = toHex(regs.ss, 4);
+    document.getElementById('reg-ds').value = toHex(regs.ds, 4);
+    document.getElementById('reg-fs').value = toHex(regs.fs, 4);
+    document.getElementById('reg-gs').value = toHex(regs.gs, 4);
 }
 function syncFlags() {
     document.getElementById('flg-cf').checked = x86Machine.getFlag(0);
@@ -179,6 +185,12 @@ function init(src) {
         esp: mem.getStackTopAddr(),
         eip: mem.getTextBaseAddr(),
         eflags: (1 << 1) | (1 << 12) | (1 << 13) | (1 << 14) | (1 << 15),
+        es: 0,
+        cs: 0,
+        ss: 0,
+        ds: 0,
+        fs: 0,
+        gs: 0,
     });
 }
 function run() {
@@ -338,6 +350,15 @@ var X86Reg;
     X86Reg[X86Reg["EIP"] = 8] = "EIP";
     X86Reg[X86Reg["EFLAGS"] = 9] = "EFLAGS";
 })(X86Reg || (X86Reg = {}));
+var X86SReg;
+(function (X86SReg) {
+    X86SReg[X86SReg["ES"] = 0] = "ES";
+    X86SReg[X86SReg["CS"] = 1] = "CS";
+    X86SReg[X86SReg["SS"] = 2] = "SS";
+    X86SReg[X86SReg["DS"] = 3] = "DS";
+    X86SReg[X86SReg["FS"] = 4] = "FS";
+    X86SReg[X86SReg["GS"] = 5] = "GS";
+})(X86SReg || (X86SReg = {}));
 const ARITH_FLAG_CLEAR = ~((1 << 11) | (1 << 7) |
     (1 << 6) | (1 << 4) |
     (1 << 2) | (1 << 0));
@@ -355,6 +376,13 @@ class X86 {
         this.regs[7] = regs.edi;
         this.regs[8] = regs.eip;
         this.regs[9] = regs.eflags;
+        this.sregs = new Uint16Array(6);
+        this.sregs[0] = regs.es;
+        this.sregs[1] = regs.cs;
+        this.sregs[2] = regs.ss;
+        this.sregs[3] = regs.ds;
+        this.sregs[4] = regs.fs;
+        this.sregs[5] = regs.gs;
         this.add = this.add.bind(this);
         this.or = this.or.bind(this);
         this.adc = this.adc.bind(this);
@@ -362,6 +390,7 @@ class X86 {
         this.and = this.and.bind(this);
         this.sub = this.sub.bind(this);
         this.xor = this.xor.bind(this);
+        this.pushpop = this.pushpop.bind(this);
     }
     getRegisters() {
         return {
@@ -375,6 +404,12 @@ class X86 {
             edi: this.regs[7],
             eip: this.regs[8],
             eflags: this.regs[9],
+            es: this.sregs[0],
+            cs: this.sregs[1],
+            ss: this.sregs[2],
+            ds: this.sregs[3],
+            fs: this.sregs[4],
+            gs: this.sregs[5],
         };
     }
     setFlag(flag, value) {
@@ -401,7 +436,7 @@ class X86 {
                     this.processImm(w, 0, this.add);
                 }
                 else {
-                    throw new sigill_1.default('push/pop es not implemented');
+                    this.sregs[0] = this.pushpop(this.sregs[0], 0, w);
                 }
                 break;
             case 2:
@@ -623,6 +658,23 @@ class X86 {
         this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
         this.regs[9] |= this.parity(a) << 2;
         return r;
+    }
+    pushpop(a, _, pull) {
+        if (!pull) {
+            this.regs[4] -= 4;
+            if ((this.regs[4] & 0x3) == 0) {
+                this.mem.writeWord(this.regs[4], a);
+            }
+            return a;
+        }
+        else {
+            let value = 0;
+            if ((this.regs[4] & 0x3) == 0) {
+                value = this.mem.readWord(this.regs[4]);
+            }
+            this.regs[4] += 4;
+            return value;
+        }
     }
 }
 exports.default = X86;
