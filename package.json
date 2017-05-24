@@ -4,7 +4,8 @@
   "description": "tbd",
   "scripts": {
     "build": "bin/build",
-    "lint": "node_modules/.bin/tslint --project ."
+    "lint": "node_modules/.bin/tslint --project .",
+    "test": "node tests/*.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,7 @@
   "homepage": "https://github.com/es1024/jsasm#readme",
   "dependencies": {
     "source-map-loader": "^0.2.1",
+    "testjs": "^1.0.4",
     "tslint": "^5.2.0",
     "typescript": "^2.3.2",
     "webpack": "^2.5.1"
