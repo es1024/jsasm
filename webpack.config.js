@@ -5,10 +5,10 @@ var excludeRegex = /node_modules/;
 var config = {
     cache: true,
     entry: {
-      'bundle': ['./build/index.js'],
+      'bundle': ['./build/src/index.js'],
     },
     output: {
-        path: path.resolve(__dirname, "build"),
+        path: path.resolve(__dirname, "build", "src"),
         filename: "[name].js"
     },
     devtool: 'source-map',

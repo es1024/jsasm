@@ -12,14 +12,6 @@ then
     exit 1
 fi
 
-./node_modules/.bin/tsc -p ./tests
-rval=$?
-if [ $rval -ne 0 ];
-then
-    echo "tsc failed (error code: $rval)"
-    exit 3
-fi
-
 ./node_modules/.bin/webpack
 rval=$?
 if [ $rval -ne 0 ];
@@ -28,5 +20,5 @@ then
     exit 2
 fi
 
-cp -R src/static/* build/
+cp -R src/static/* build/src
 

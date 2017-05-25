@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
-        "baseUrl": "src",
+        "baseUrl": ".",
         "experimentalDecorators": true,
         "module": "commonjs",
         "moduleResolution": "node",

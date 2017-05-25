@@ -250,6 +250,10 @@ class X86 {
                             != ((this.regs[9] & (1 << 11)) == 0));
                 }
                 break;
+            case 36:
+                if (!d && !w) {
+                    break;
+                }
             default:
                 throw new sigill_1.default('probably just unimplemented or something');
         }

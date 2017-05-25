@@ -1,1 +1,0 @@
-{"version":3,"file":"sigbase.js","sourceRoot":"","sources":["../../src/error/sigbase.ts"],"names":[],"mappings":";;AAAA,aAA6B,SAAQ,KAAK;IACxC,YAAY,CAAS;QACnB,KAAK,CAAC,CAAC,CAAC,CAAC;QACT,MAAM,CAAC,cAAc,CAAC,IAAI,EAAE,OAAO,CAAC,SAAS,CAAC,CAAC;IACjD,CAAC;IAED,OAAO;QACL,MAAM,CAAC,kCAAkC,CAAC;IAC5C,CAAC;CACF;AATD,0BASC"}

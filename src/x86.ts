@@ -249,6 +249,10 @@ export default class X86 {
               != ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) == 0));
         }
       break;
+      case 36:
+        if (!d && !w) {
+          break;
+        }
       default:
         throw new SIGILL('probably just unimplemented or something');
     }

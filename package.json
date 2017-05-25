@@ -5,7 +5,7 @@
   "scripts": {
     "build": "bin/build",
     "lint": "node_modules/.bin/tslint --project .",
-    "test": "node tests/*.js"
+    "test": "node build/tests/*.js"
   },
   "repository": {
     "type": "git",
