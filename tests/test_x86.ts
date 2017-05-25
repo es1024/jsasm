@@ -71,10 +71,6 @@ function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X
   return new X86(mem, <X86Registers> regs);
 }
 
-function sigill(error: any): boolean {
-  return typeof error.sigtype === 'function' && error.sigtype() === 'SIGILL';
-}
-
 Suite.run({
   'execution order': function(test: any): void {
     let x86: X86;

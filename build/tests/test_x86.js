@@ -79,9 +79,6 @@ function prepareX86(text, stack, regs) {
     }
     return new x86_1.default(mem, regs);
 }
-function sigill(error) {
-    return typeof error.sigtype === 'function' && error.sigtype() === 'SIGILL';
-}
 Suite.run({
     'execution order': function (test) {
         let x86;
