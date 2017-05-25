@@ -2,4 +2,3 @@
 *.un~
 node_modules
 *.map
-build/tests
