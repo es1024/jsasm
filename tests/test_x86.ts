@@ -72,22 +72,23 @@ function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X
 }
 
 Suite.run({
-  'execution order': function(test: any): void {
+  'single byte instruction extraction': function(test: any): void {
     let x86: X86;
     let text = Array(256).fill(0xFF);
     let step = () => { x86.step(); };
 
     x86 = prepareX86(text);
+    let initEIP = x86.getRegisters().eip;
     test.throws(step, SIGILL);
 
     for (let i = 0; i < 255; ++i) {
       text[i] = 0x90;
-      x86 = prepareX86(text);
-      let initEIP = x86.getRegisters().eip;
-      for (let j = 0; j <= i; ++j) {
-        test.doesNotThrow(step);
-        test.equal(x86.getRegisters().eip, initEIP + j + 1);
+      if (i > 0) {
+        test[i - 1] = 0xFF;
       }
+      x86 = prepareX86(text, undefined, { eip: initEIP });
+      test.doesNotThrow(step);
+      test.equal(x86.getRegisters().eip, ++initEIP);
       test.throws(step, SIGILL);
     }
 
