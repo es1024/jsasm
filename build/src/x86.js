@@ -88,6 +88,24 @@ class X86 {
             gs: this.sregs[5],
         };
     }
+    setRegisters(regs) {
+        this.regs[0] = regs.eax;
+        this.regs[1] = regs.ecx;
+        this.regs[2] = regs.edx;
+        this.regs[3] = regs.ebx;
+        this.regs[4] = regs.esp;
+        this.regs[5] = regs.ebp;
+        this.regs[6] = regs.esi;
+        this.regs[7] = regs.edi;
+        this.regs[8] = regs.eip;
+        this.regs[9] = regs.eflags;
+        this.sregs[0] = regs.es;
+        this.sregs[1] = regs.cs;
+        this.sregs[2] = regs.ss;
+        this.sregs[3] = regs.ds;
+        this.sregs[4] = regs.fs;
+        this.sregs[5] = regs.gs;
+    }
     setFlag(flag, value) {
         if (value) {
             this.regs[9] |= (1 << flag);
@@ -362,8 +380,8 @@ class X86 {
                 else {
                     const RMr = RM & 0x3;
                     const regr = reg & 0x3;
-                    const RMs = RM & 0x4;
-                    const regs = reg & 0x4;
+                    const RMs = (RM & 0x4) << 1;
+                    const regs = (reg & 0x4) << 1;
                     const tmp = f((this.regs[RMr] & (0xFF << RMs)) >> RMs, (this.regs[regr] & (0xFF << regs)) >> regs, w);
                     if (k) {
                         this.regs[RMr] = (this.regs[RMr] & ~(0xFF << RMs)) | tmp << RMs;
@@ -386,7 +404,7 @@ class X86 {
         else {
             const imm = this.nextInstByte();
             const regr = reg & 0x3;
-            const regs = reg & 0x4;
+            const regs = (reg & 0x4) << 1;
             const tmp = f((this.regs[regr] & (0xFF << regs)) >> regs, imm, w);
             if (k) {
                 this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;

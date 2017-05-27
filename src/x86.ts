@@ -381,8 +381,8 @@ export default class X86 {
         } else {
           const RMr = RM & 0x3;
           const regr = reg & 0x3;
-          const RMs = RM & 0x4;
-          const regs = reg & 0x4;
+          const RMs = (RM & 0x4) << 1;
+          const regs = (reg & 0x4) << 1;
           const tmp = f((this.regs[RMr] & (0xFF << RMs)) >> RMs,
               (this.regs[regr] & (0xFF << regs)) >> regs, w);
           if (k) {
@@ -407,7 +407,7 @@ export default class X86 {
     } else {
       const imm = this.nextInstByte();
       const regr = reg & 0x3;
-      const regs = reg & 0x4;
+      const regs = (reg & 0x4) << 1;
       const tmp = f((this.regs[regr] & (0xFF << regs)) >> regs, imm, w);
       if (k) {
         this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
@@ -449,7 +449,7 @@ export default class X86 {
   }
 
   private adc(a: number, b: number, w: boolean): number {
-    const cf = (this.regs[X86Reg.EFLAGS] >> (X86Flag.CF)) & 1;
+    const cf = (this.regs[X86Reg.EFLAGS] >> X86Flag.CF) & 1;
     const r = a + b + cf;
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
