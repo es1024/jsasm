@@ -301,13 +301,13 @@ export default class X86 {
     let index = 0;
     let base = RM;
     let addr = 0;
-    if (mod < 3 && RM == 5) {
+    if (mod < 3 && RM == 4) {
       const SIB = this.nextInstByte();
       scale = SIB >> 6;
       index = (SIB >> 3) & 0x7;
       base = SIB & 0x7;
-      if (base == 5) {
-        throw new SIGILL('SIB base=5');
+      if (base == 4) {
+        throw new SIGILL('SIB base=4');
       }
     }
     switch (mod) {
@@ -321,7 +321,7 @@ export default class X86 {
           offset >>= 24;
         }
       case 0:
-        if (base == 6 && mod == 0) {
+        if (base == 5 && mod == 0) {
           addr |= this.nextInstByte();
           addr |= this.nextInstByte() << 8;
           addr |= this.nextInstByte() << 16;
@@ -329,7 +329,7 @@ export default class X86 {
         } else {
           addr = this.regs[base] + offset;
         }
-        if (RM == 5) {
+        if (RM == 4) {
           addr += index << scale;
         }
         addr &= 0xFFFFFFFF;
