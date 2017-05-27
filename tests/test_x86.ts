@@ -405,7 +405,7 @@ Suite.run({
       esi: 0x0000 | STACK_MASK,
       edi: 0x0004 | STACK_MASK,
     };
-    let text = Array(128).fill(0x29); // sub r8, r/m8 to also check direction
+    let text = Array(128).fill(0x2A); // sub r8, r/m8 to also check direction
     for (let i = 0; i < 64; ++i) {
       text[2 * i + 1] = 0x00 | i;
     }

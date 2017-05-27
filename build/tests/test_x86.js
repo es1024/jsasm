@@ -484,7 +484,7 @@ Suite.run({
             esi: 0x0000 | address_1.STACK_MASK,
             edi: 0x0004 | address_1.STACK_MASK,
         };
-        let text = Array(128).fill(0x29);
+        let text = Array(128).fill(0x2A);
         for (let i = 0; i < 64; ++i) {
             text[2 * i + 1] = 0x00 | i;
         }
