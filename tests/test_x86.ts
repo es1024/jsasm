@@ -144,7 +144,6 @@ Suite.run({
 
     test.done();
   },
-
   'mod/reg/rm reg8': function(test: any): void {
     let regs = {
       eax: 0xDEAD1001,
@@ -183,7 +182,6 @@ Suite.run({
 
     test.done();
   },
-
   'mod/reg/rm reg32': function(test: any): void {
     let regs = {
       eax: 0x01,
@@ -219,6 +217,85 @@ Suite.run({
           case 7: expected.edi = expectedOut; break;
         }
         compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
+        setRegs(x86, regs);
+      }
+    }
+
+    test.done();
+  },
+  'mod/reg/rm reg8+direction': function(test: any): void {
+    let regs = {
+      eax: 0xDEAD1001,
+      ecx: 0xDEAD2002,
+      edx: 0xDEAD4004,
+      ebx: 0xDEAD8008,
+    };
+    let text = Array(128).fill(0x2A); // sub r8, r/m8 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0xC0 | i;
+    }
+
+    let x86 = prepareX86(text, undefined, regs);
+    const rn = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        x86.step();
+
+        let expectedOut = ((1 << i) - (1 << j)) & 0xFF;
+        let mask = 0xFFFFFF00;
+        if (i & 0x4) {
+          expectedOut <<= 8;
+          mask = 0xFFFF00FF;
+        }
+        let expected = {...regs};
+        switch (i & 0x3) {
+          case 0: expected.eax = expected.eax & mask | expectedOut; break;
+          case 1: expected.ecx = expected.ecx & mask | expectedOut; break;
+          case 2: expected.edx = expected.edx & mask | expectedOut; break;
+          case 3: expected.ebx = expected.ebx & mask | expectedOut; break;
+        }
+        compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
+        setRegs(x86, regs);
+      }
+    }
+
+    test.done();
+  },
+  'mod/reg/rm reg32+direction': function(test: any): void {
+    let regs = {
+      eax: 0x01,
+      ecx: 0x02,
+      edx: 0x04,
+      ebx: 0x08,
+      esp: 0x10,
+      ebp: 0x20,
+      esi: 0x40,
+      edi: 0x80,
+    };
+    let text = Array(128).fill(0x2B); // sub r32, r/m32 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0xC0 | i;
+    }
+
+    let x86 = prepareX86(text, undefined, regs);
+    const rn = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        x86.step();
+
+        let expectedOut = ((1 << i) - (1 << j)) & 0xFFFFFFFF;
+        let expected = {...regs};
+        switch (i) {
+          case 0: expected.eax = expectedOut; break;
+          case 1: expected.ecx = expectedOut; break;
+          case 2: expected.edx = expectedOut; break;
+          case 3: expected.ebx = expectedOut; break;
+          case 4: expected.esp = expectedOut; break;
+          case 5: expected.ebp = expectedOut; break;
+          case 6: expected.esi = expectedOut; break;
+          case 7: expected.edi = expectedOut; break;
+        }
+        compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
         setRegs(x86, regs);
       }
     }
