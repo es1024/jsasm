@@ -414,9 +414,9 @@ Suite.run({
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
-                const cregs = x86.getRegisters();
-                cregs.eip += 2;
                 if (j == 4 || j == 5) {
+                    const cregs = x86.getRegisters();
+                    cregs.eip += 2;
                     x86.setRegisters(cregs);
                     continue;
                 }
@@ -456,9 +456,9 @@ Suite.run({
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
-                const cregs = x86.getRegisters();
-                cregs.eip += 2;
                 if (j == 4 || j == 5) {
+                    const cregs = x86.getRegisters();
+                    cregs.eip += 2;
                     x86.setRegisters(cregs);
                     continue;
                 }
@@ -496,20 +496,19 @@ Suite.run({
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
-                const cregs = x86.getRegisters();
-                cregs.eip += 2;
                 if (j == 4 || j == 5) {
+                    const cregs = x86.getRegisters();
+                    cregs.eip += 2;
                     x86.setRegisters(cregs);
                     continue;
                 }
                 const tname = 'sub ' + REG8[i] + ', byte [' + REG32[i] + ']:';
                 x86.step();
                 const memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
-                const expected = (getReg8(regs, i) - memory) & 0xFF;
-                const actual = getReg8(cregs, i);
-                annotatedTestEqualHex(test, actual, expected, tname);
-                assignReg8(cregs, i, getReg8(regs, i));
-                setRegs(x86, cregs);
+                const expected = Object.assign({}, regs);
+                assignReg8(expected, i, (getReg8(regs, i) - memory) & 0xFF);
+                compareRegs(test, x86, expected, tname);
+                setRegs(x86, regs);
             }
         }
         test.done();
@@ -537,9 +536,9 @@ Suite.run({
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
-                const cregs = x86.getRegisters();
-                cregs.eip += 2;
                 if (j == 4 || j == 5) {
+                    const cregs = x86.getRegisters();
+                    cregs.eip += 2;
                     x86.setRegisters(cregs);
                     continue;
                 }
@@ -547,11 +546,10 @@ Suite.run({
                 x86.step();
                 let memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
                 memory |= memory << 8 | memory << 16 | memory << 24;
-                const expected = getReg32(regs, i) - memory;
-                const actual = getReg32(cregs, i);
-                annotatedTestEqualHex(test, actual, expected, tname);
-                assignReg32(cregs, i, getReg32(regs, i));
-                setRegs(x86, cregs);
+                const expected = Object.assign({}, regs);
+                assignReg32(expected, i, getReg32(regs, i) - memory);
+                compareRegs(test, x86, expected, tname);
+                setRegs(x86, regs);
             }
         }
         test.done();
