@@ -54,9 +54,8 @@ const enum X86SReg {
   GS = 5,
 }
 
-const ARITH_FLAG_CLEAR = ~((1 << <number>X86Flag.OF) | (1 << <number>X86Flag.SF) |
-    (1 << <number>X86Flag.ZF) | (1 << <number>X86Flag.AF) |
-    (1 << <number>X86Flag.PF) | (1 << <number>X86Flag.CF));
+const ARITH_FLAG_CLEAR = ~((1 << X86Flag.OF) | (1 << X86Flag.SF) | (1 << X86Flag.ZF)
+    | (1 << X86Flag.AF) | (1 << X86Flag.PF) | (1 << X86Flag.CF));
 
 export default class X86 {
   private regs: Uint32Array;
@@ -136,14 +135,14 @@ export default class X86 {
 
   setFlag(flag: X86Flag, value: boolean): void {
     if (value) {
-      this.regs[X86Reg.EFLAGS] |= (1 << <number>flag);
+      this.regs[X86Reg.EFLAGS] |= (1 << flag);
     } else {
-      this.regs[X86Reg.EFLAGS] &= ~(1 << <number>flag);
+      this.regs[X86Reg.EFLAGS] &= ~(1 << flag);
     }
   }
 
   getFlag(flag: X86Flag): boolean {
-    return (this.regs[X86Reg.EFLAGS] & (1 << <number>flag)) !== 0;
+    return (this.regs[X86Reg.EFLAGS] & (1 << flag)) !== 0;
   }
 
   getMemoryManager(): MemoryManager {

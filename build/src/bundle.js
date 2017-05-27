@@ -393,9 +393,8 @@ var X86SReg;
     X86SReg[X86SReg["FS"] = 4] = "FS";
     X86SReg[X86SReg["GS"] = 5] = "GS";
 })(X86SReg || (X86SReg = {}));
-const ARITH_FLAG_CLEAR = ~((1 << 11) | (1 << 7) |
-    (1 << 6) | (1 << 4) |
-    (1 << 2) | (1 << 0));
+const ARITH_FLAG_CLEAR = ~((1 << 11) | (1 << 7) | (1 << 6)
+    | (1 << 4) | (1 << 2) | (1 << 0));
 class X86 {
     constructor(mem, regs) {
         this.mem = mem;
