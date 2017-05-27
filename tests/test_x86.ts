@@ -31,6 +31,7 @@ function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X
     stackLength: 256,
   });
   if (typeof regs === 'undefined') { regs = {}; }
+  regs = {...regs};
   if (typeof regs.eax === 'undefined') { regs.eax = 0; }
   if (typeof regs.ecx === 'undefined') { regs.ecx = 0; }
   if (typeof regs.edx === 'undefined') { regs.edx = 0; }
@@ -71,26 +72,53 @@ function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X
   return new X86(mem, <X86Registers> regs);
 }
 
-function compareRegs(test: any, x86: X86, regs: X86RegistersOpt): void {
+function compareRegs(test: any, x86: X86, regs: X86RegistersOpt, e?: string): void {
   let aregs = x86.getRegisters();
-  if (typeof regs.eax !== 'undefined') { test.equal(aregs.eax | 0, regs.eax | 0); }
-  if (typeof regs.ecx !== 'undefined') { test.equal(aregs.ecx | 0, regs.ecx | 0); }
-  if (typeof regs.edx !== 'undefined') { test.equal(aregs.edx | 0, regs.edx | 0); }
-  if (typeof regs.ebx !== 'undefined') { test.equal(aregs.ebx | 0, regs.ebx | 0); }
-  if (typeof regs.esp !== 'undefined') { test.equal(aregs.esp | 0, regs.esp | 0); }
-  if (typeof regs.ebp !== 'undefined') { test.equal(aregs.ebp | 0, regs.ebp | 0); }
-  if (typeof regs.esi !== 'undefined') { test.equal(aregs.esi | 0, regs.esi | 0); }
-  if (typeof regs.edi !== 'undefined') { test.equal(aregs.edi | 0, regs.edi | 0); }
-  if (typeof regs.eip !== 'undefined') { test.equal(aregs.eip | 0, regs.eip | 0); }
+  let cmp = (a, b, name) => {
+    a = ((a | 0) + 4294967296) % 4294967296;
+    b = ((b | 0) + 4294967296) % 4294967296;
+    test.equal(a, b, (e || '') + ' reg=' + name + ' expected='
+        + b.toString(16) + ' actual=' + a.toString(16));
+  };
+  if (typeof regs.eax !== 'undefined') { cmp(aregs.eax, regs.eax, 'eax'); }
+  if (typeof regs.ecx !== 'undefined') { cmp(aregs.ecx, regs.ecx, 'ecx'); }
+  if (typeof regs.edx !== 'undefined') { cmp(aregs.edx, regs.edx, 'edx'); }
+  if (typeof regs.ebx !== 'undefined') { cmp(aregs.ebx, regs.ebx, 'ebx'); }
+  if (typeof regs.esp !== 'undefined') { cmp(aregs.esp, regs.esp, 'esp'); }
+  if (typeof regs.ebp !== 'undefined') { cmp(aregs.ebp, regs.ebp, 'ebp'); }
+  if (typeof regs.esi !== 'undefined') { cmp(aregs.esi, regs.esi, 'esi'); }
+  if (typeof regs.edi !== 'undefined') { cmp(aregs.edi, regs.edi, 'edi'); }
+  if (typeof regs.eip !== 'undefined') { cmp(aregs.eip, regs.eip, 'eip'); }
   if (typeof regs.eflags !== 'undefined') {
-    test.equal(aregs.eflags | 0, regs.eflags | 0);
+    cmp(aregs.eflags, regs.eflags, 'eflags');
   }
-  if (typeof regs.es !== 'undefined') { test.equal(aregs.es | 0, regs.es | 0); }
-  if (typeof regs.cs !== 'undefined') { test.equal(aregs.cs | 0, regs.cs | 0); }
-  if (typeof regs.ss !== 'undefined') { test.equal(aregs.ss | 0, regs.ss | 0); }
-  if (typeof regs.ds !== 'undefined') { test.equal(aregs.ds | 0, regs.ds | 0); }
-  if (typeof regs.fs !== 'undefined') { test.equal(aregs.fs | 0, regs.fs | 0); }
-  if (typeof regs.gs !== 'undefined') { test.equal(aregs.gs | 0, regs.gs | 0); }
+  if (typeof regs.es !== 'undefined') { cmp(aregs.es, regs.es, 'es'); }
+  if (typeof regs.cs !== 'undefined') { cmp(aregs.cs, regs.cs, 'cs'); }
+  if (typeof regs.ss !== 'undefined') { cmp(aregs.ss, regs.ss, 'ss'); }
+  if (typeof regs.ds !== 'undefined') { cmp(aregs.ds, regs.ds, 'ds'); }
+  if (typeof regs.fs !== 'undefined') { cmp(aregs.fs, regs.fs, 'fs'); }
+  if (typeof regs.gs !== 'undefined') { cmp(aregs.gs, regs.gs, 'gs'); }
+}
+
+function setRegs(x86: X86, regs: X86RegistersOpt): void {
+  let cregs = x86.getRegisters();
+  if (typeof regs.eax !== 'undefined') { cregs.eax = regs.eax; }
+  if (typeof regs.ecx !== 'undefined') { cregs.ecx = regs.ecx; }
+  if (typeof regs.edx !== 'undefined') { cregs.edx = regs.edx; }
+  if (typeof regs.ebx !== 'undefined') { cregs.ebx = regs.ebx; }
+  if (typeof regs.esp !== 'undefined') { cregs.esp = regs.esp; }
+  if (typeof regs.ebp !== 'undefined') { cregs.ebp = regs.ebp; }
+  if (typeof regs.esi !== 'undefined') { cregs.esi = regs.esi; }
+  if (typeof regs.edi !== 'undefined') { cregs.edi = regs.edi; }
+  if (typeof regs.eip !== 'undefined') { cregs.eip = regs.eip; }
+  if (typeof regs.eflags !== 'undefined') { cregs.eflags = regs.eflags; }
+  if (typeof regs.es !== 'undefined') { cregs.es = regs.es; }
+  if (typeof regs.cs !== 'undefined') { cregs.cs = regs.cs; }
+  if (typeof regs.ss !== 'undefined') { cregs.ss = regs.ss; }
+  if (typeof regs.ds !== 'undefined') { cregs.ds = regs.ds; }
+  if (typeof regs.fs !== 'undefined') { cregs.fs = regs.fs; }
+  if (typeof regs.gs !== 'undefined') { cregs.gs = regs.gs; }
+  x86.setRegisters(cregs);
 }
 
 Suite.run({
@@ -130,14 +158,12 @@ Suite.run({
     }
 
     let x86 = prepareX86(text, undefined, regs);
+    const rn = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
     for (let i = 0; i < 8; ++i) {
       for (let j = 0; j < 8; ++j) {
         x86.step();
 
-        let expectedOut = (1 << j) - (1 << i);
-        if (expectedOut < 0) {
-          expectedOut = 0x100 - expectedOut;
-        }
+        let expectedOut = ((1 << j) - (1 << i)) & 0xFF;
         let mask = 0xFFFFFF00;
         if (j & 0x4) {
           expectedOut <<= 8;
@@ -150,9 +176,8 @@ Suite.run({
           case 2: expected.edx = expected.edx & mask | expectedOut; break;
           case 3: expected.ebx = expected.ebx & mask | expectedOut; break;
         }
-        test.log(expected);
-        compareRegs(test, x86, expected);
-        x86.setRegisters(regs);
+        compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
+        setRegs(x86, regs);
       }
     }
 
