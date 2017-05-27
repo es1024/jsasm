@@ -189,6 +189,57 @@ function setRegs(x86, regs) {
     }
     x86.setRegisters(cregs);
 }
+function assignReg8(regs, reg, val) {
+    let mask = 0xFFFFFF00;
+    val &= 0xFF;
+    if (reg & 0x4) {
+        val <<= 8;
+        mask = 0xFFFF00FF;
+    }
+    switch (reg & 0x3) {
+        case 0:
+            regs.eax = regs.eax & mask | val;
+            break;
+        case 1:
+            regs.ecx = regs.ecx & mask | val;
+            break;
+        case 2:
+            regs.edx = regs.edx & mask | val;
+            break;
+        case 3:
+            regs.ebx = regs.ebx & mask | val;
+            break;
+    }
+}
+function assignReg32(regs, reg, val) {
+    val &= 0xFFFFFFFF;
+    switch (reg) {
+        case 0:
+            regs.eax = val;
+            break;
+        case 1:
+            regs.ecx = val;
+            break;
+        case 2:
+            regs.edx = val;
+            break;
+        case 3:
+            regs.ebx = val;
+            break;
+        case 4:
+            regs.esp = val;
+            break;
+        case 5:
+            regs.ebp = val;
+            break;
+        case 6:
+            regs.esi = val;
+            break;
+        case 7:
+            regs.edi = val;
+            break;
+    }
+}
 Suite.run({
     'single byte instruction extraction': function (test) {
         let x86;
@@ -225,27 +276,8 @@ Suite.run({
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
                 x86.step();
-                let expectedOut = ((1 << j) - (1 << i)) & 0xFF;
-                let mask = 0xFFFFFF00;
-                if (j & 0x4) {
-                    expectedOut <<= 8;
-                    mask = 0xFFFF00FF;
-                }
                 let expected = Object.assign({}, regs);
-                switch (j & 0x3) {
-                    case 0:
-                        expected.eax = expected.eax & mask | expectedOut;
-                        break;
-                    case 1:
-                        expected.ecx = expected.ecx & mask | expectedOut;
-                        break;
-                    case 2:
-                        expected.edx = expected.edx & mask | expectedOut;
-                        break;
-                    case 3:
-                        expected.ebx = expected.ebx & mask | expectedOut;
-                        break;
-                }
+                assignReg8(expected, j, (1 << j) - (1 << i));
                 compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
                 setRegs(x86, regs);
             }
@@ -272,34 +304,8 @@ Suite.run({
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
                 x86.step();
-                let expectedOut = ((1 << j) - (1 << i)) & 0xFFFFFFFF;
                 let expected = Object.assign({}, regs);
-                switch (j) {
-                    case 0:
-                        expected.eax = expectedOut;
-                        break;
-                    case 1:
-                        expected.ecx = expectedOut;
-                        break;
-                    case 2:
-                        expected.edx = expectedOut;
-                        break;
-                    case 3:
-                        expected.ebx = expectedOut;
-                        break;
-                    case 4:
-                        expected.esp = expectedOut;
-                        break;
-                    case 5:
-                        expected.ebp = expectedOut;
-                        break;
-                    case 6:
-                        expected.esi = expectedOut;
-                        break;
-                    case 7:
-                        expected.edi = expectedOut;
-                        break;
-                }
+                assignReg32(expected, j, (1 << j) - (1 << i));
                 compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
                 setRegs(x86, regs);
             }
@@ -322,27 +328,8 @@ Suite.run({
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
                 x86.step();
-                let expectedOut = ((1 << i) - (1 << j)) & 0xFF;
-                let mask = 0xFFFFFF00;
-                if (i & 0x4) {
-                    expectedOut <<= 8;
-                    mask = 0xFFFF00FF;
-                }
                 let expected = Object.assign({}, regs);
-                switch (i & 0x3) {
-                    case 0:
-                        expected.eax = expected.eax & mask | expectedOut;
-                        break;
-                    case 1:
-                        expected.ecx = expected.ecx & mask | expectedOut;
-                        break;
-                    case 2:
-                        expected.edx = expected.edx & mask | expectedOut;
-                        break;
-                    case 3:
-                        expected.ebx = expected.ebx & mask | expectedOut;
-                        break;
-                }
+                assignReg8(expected, i, (1 << i) - (1 << j));
                 compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
                 setRegs(x86, regs);
             }
@@ -369,34 +356,8 @@ Suite.run({
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
                 x86.step();
-                let expectedOut = ((1 << i) - (1 << j)) & 0xFFFFFFFF;
                 let expected = Object.assign({}, regs);
-                switch (i) {
-                    case 0:
-                        expected.eax = expectedOut;
-                        break;
-                    case 1:
-                        expected.ecx = expectedOut;
-                        break;
-                    case 2:
-                        expected.edx = expectedOut;
-                        break;
-                    case 3:
-                        expected.ebx = expectedOut;
-                        break;
-                    case 4:
-                        expected.esp = expectedOut;
-                        break;
-                    case 5:
-                        expected.ebp = expectedOut;
-                        break;
-                    case 6:
-                        expected.esi = expectedOut;
-                        break;
-                    case 7:
-                        expected.edi = expectedOut;
-                        break;
-                }
+                assignReg32(expected, i, (1 << i) - (1 << j));
                 compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
                 setRegs(x86, regs);
             }
