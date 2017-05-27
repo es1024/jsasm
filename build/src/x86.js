@@ -117,6 +117,9 @@ class X86 {
     getFlag(flag) {
         return (this.regs[9] & (1 << flag)) !== 0;
     }
+    getMemoryManager() {
+        return this.mem;
+    }
     step() {
         const op = this.nextInstByte();
         const d = !!(op & 0x02);

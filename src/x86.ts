@@ -146,6 +146,10 @@ export default class X86 {
     return (this.regs[X86Reg.EFLAGS] & (1 << <number>flag)) !== 0;
   }
 
+  getMemoryManager(): MemoryManager {
+    return this.mem;
+  }
+
   step(): void {
     const op = this.nextInstByte();
     const d = !!(op & 0x02);
