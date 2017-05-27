@@ -252,5 +252,59 @@ Suite.run({
         }
         test.done();
     },
+    'mod/reg/rm reg32': function (test) {
+        let regs = {
+            eax: 0x01,
+            ecx: 0x02,
+            edx: 0x04,
+            ebx: 0x08,
+            esp: 0x10,
+            ebp: 0x20,
+            esi: 0x40,
+            edi: 0x80,
+        };
+        let text = Array(128).fill(0x29);
+        for (let i = 0; i < 64; ++i) {
+            text[2 * i + 1] = 0xC0 | i;
+        }
+        let x86 = prepareX86(text, undefined, regs);
+        const rn = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
+        for (let i = 0; i < 8; ++i) {
+            for (let j = 0; j < 8; ++j) {
+                x86.step();
+                let expectedOut = ((1 << j) - (1 << i)) & 0xFFFFFFFF;
+                let expected = Object.assign({}, regs);
+                switch (j) {
+                    case 0:
+                        expected.eax = expectedOut;
+                        break;
+                    case 1:
+                        expected.ecx = expectedOut;
+                        break;
+                    case 2:
+                        expected.edx = expectedOut;
+                        break;
+                    case 3:
+                        expected.ebx = expectedOut;
+                        break;
+                    case 4:
+                        expected.esp = expectedOut;
+                        break;
+                    case 5:
+                        expected.ebp = expectedOut;
+                        break;
+                    case 6:
+                        expected.esi = expectedOut;
+                        break;
+                    case 7:
+                        expected.edi = expectedOut;
+                        break;
+                }
+                compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
+                setRegs(x86, regs);
+            }
+        }
+        test.done();
+    },
 });
 //# sourceMappingURL=test_x86.js.map
