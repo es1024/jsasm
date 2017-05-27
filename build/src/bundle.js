@@ -689,7 +689,11 @@ class X86 {
                 addr &= 0xFFFFFFFF;
                 let memVal = 0;
                 let memA = 0, memB = 0, maskTop = 0, maskBottom = 0, cTop = 0, cBottom = 0;
-                if ((addr & 0x3) == 0) {
+                if (!w) {
+                    memA = this.mem.readWord(addr & ~0x3);
+                    memVal = (memA >> ((addr & 0x3) << 3)) & 0xFF;
+                }
+                else if ((addr & 0x3) == 0) {
                     memVal = this.mem.readWord(addr);
                 }
                 else {
@@ -704,14 +708,14 @@ class X86 {
                     memVal &= memA >> cBottom;
                 }
                 if (d) {
-                    const v = f(this.regs[reg], memVal, w);
-                    if (k) {
-                        this.regs[reg] = v;
-                    }
+                    this.processToReg(reg, w, k, memVal, f);
                 }
                 else {
-                    const v = f(memVal, this.regs[reg], w);
-                    if (k) {
+                    const v = f(memVal, this.getReg(reg, w), w);
+                    if (!k) {
+                        break;
+                    }
+                    if (w) {
                         if ((addr & 0x3) == 0) {
                             this.mem.writeWord(addr, v);
                         }
@@ -724,6 +728,12 @@ class X86 {
                             this.mem.writeWord((addr & ~0x3) + 4, memB);
                         }
                     }
+                    else {
+                        const offs = (addr & 0x3) << 3;
+                        memA &= ~(0xFF << offs);
+                        memA |= v << offs;
+                        this.mem.writeWord(addr & ~0x3, memA);
+                    }
                 }
                 break;
             case 3:
@@ -732,23 +742,33 @@ class X86 {
                     reg = RM;
                     RM = tmp;
                 }
-                if (w) {
-                    const v = f(this.regs[RM], this.regs[reg], w);
-                    if (k) {
-                        this.regs[RM] = v;
-                    }
-                }
-                else {
-                    const RMr = RM & 0x3;
-                    const regr = reg & 0x3;
-                    const RMs = (RM & 0x4) << 1;
-                    const regs = (reg & 0x4) << 1;
-                    const tmp = f((this.regs[RMr] & (0xFF << RMs)) >> RMs, (this.regs[regr] & (0xFF << regs)) >> regs, w);
-                    if (k) {
-                        this.regs[RMr] = (this.regs[RMr] & ~(0xFF << RMs)) | tmp << RMs;
-                    }
-                }
+                this.processToReg(RM, w, k, this.getReg(reg, w), f);
                 break;
+        }
+    }
+    getReg(reg, w) {
+        let rv = this.regs[reg];
+        if (!w) {
+            const regr = reg & 0x3;
+            const regs = (reg & 0x4) << 1;
+            rv = (this.regs[regr] & (0xFF << regs)) >> regs;
+        }
+        return rv;
+    }
+    processToReg(reg, w, k, other, f) {
+        if (w) {
+            const v = f(this.regs[reg], other, w);
+            if (k) {
+                this.regs[reg] = v;
+            }
+        }
+        else {
+            const tmp = f(this.getReg(reg, w), other, w);
+            const regr = reg & 0x3;
+            const regs = (reg & 0x4) << 1;
+            if (k) {
+                this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+            }
         }
     }
     processImm(w, reg, k, f) {
