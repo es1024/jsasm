@@ -66,23 +66,23 @@ export default class X86 {
   constructor(mem: MemoryManager, regs: X86Registers) {
     this.mem = mem;
     this.regs = new Uint32Array(10);
-    this.regs[<number> X86Reg.EAX] = regs.eax;
-    this.regs[<number> X86Reg.ECX] = regs.ecx;
-    this.regs[<number> X86Reg.EDX] = regs.edx;
-    this.regs[<number> X86Reg.EBX] = regs.ebx;
-    this.regs[<number> X86Reg.ESP] = regs.esp;
-    this.regs[<number> X86Reg.EBP] = regs.ebp;
-    this.regs[<number> X86Reg.ESI] = regs.esi;
-    this.regs[<number> X86Reg.EDI] = regs.edi;
-    this.regs[<number> X86Reg.EIP] = regs.eip;
-    this.regs[<number> X86Reg.EFLAGS] = regs.eflags;
+    this.regs[X86Reg.EAX] = regs.eax;
+    this.regs[X86Reg.ECX] = regs.ecx;
+    this.regs[X86Reg.EDX] = regs.edx;
+    this.regs[X86Reg.EBX] = regs.ebx;
+    this.regs[X86Reg.ESP] = regs.esp;
+    this.regs[X86Reg.EBP] = regs.ebp;
+    this.regs[X86Reg.ESI] = regs.esi;
+    this.regs[X86Reg.EDI] = regs.edi;
+    this.regs[X86Reg.EIP] = regs.eip;
+    this.regs[X86Reg.EFLAGS] = regs.eflags;
     this.sregs = new Uint16Array(6);
-    this.sregs[<number> X86SReg.ES] = regs.es;
-    this.sregs[<number> X86SReg.CS] = regs.cs;
-    this.sregs[<number> X86SReg.SS] = regs.ss;
-    this.sregs[<number> X86SReg.DS] = regs.ds;
-    this.sregs[<number> X86SReg.FS] = regs.fs;
-    this.sregs[<number> X86SReg.GS] = regs.gs;
+    this.sregs[X86SReg.ES] = regs.es;
+    this.sregs[X86SReg.CS] = regs.cs;
+    this.sregs[X86SReg.SS] = regs.ss;
+    this.sregs[X86SReg.DS] = regs.ds;
+    this.sregs[X86SReg.FS] = regs.fs;
+    this.sregs[X86SReg.GS] = regs.gs;
 
     this.add = this.add.bind(this);
     this.or = this.or.bind(this);
@@ -96,35 +96,54 @@ export default class X86 {
 
   getRegisters(): X86Registers {
     return {
-      eax: this.regs[<number> X86Reg.EAX],
-      ecx: this.regs[<number> X86Reg.ECX],
-      edx: this.regs[<number> X86Reg.EDX],
-      ebx: this.regs[<number> X86Reg.EBX],
-      esp: this.regs[<number> X86Reg.ESP],
-      ebp: this.regs[<number> X86Reg.EBP],
-      esi: this.regs[<number> X86Reg.ESI],
-      edi: this.regs[<number> X86Reg.EDI],
-      eip: this.regs[<number> X86Reg.EIP],
-      eflags: this.regs[<number> X86Reg.EFLAGS],
-      es: this.sregs[<number> X86SReg.ES],
-      cs: this.sregs[<number> X86SReg.CS],
-      ss: this.sregs[<number> X86SReg.SS],
-      ds: this.sregs[<number> X86SReg.DS],
-      fs: this.sregs[<number> X86SReg.FS],
-      gs: this.sregs[<number> X86SReg.GS],
+      eax: this.regs[X86Reg.EAX],
+      ecx: this.regs[X86Reg.ECX],
+      edx: this.regs[X86Reg.EDX],
+      ebx: this.regs[X86Reg.EBX],
+      esp: this.regs[X86Reg.ESP],
+      ebp: this.regs[X86Reg.EBP],
+      esi: this.regs[X86Reg.ESI],
+      edi: this.regs[X86Reg.EDI],
+      eip: this.regs[X86Reg.EIP],
+      eflags: this.regs[X86Reg.EFLAGS],
+      es: this.sregs[X86SReg.ES],
+      cs: this.sregs[X86SReg.CS],
+      ss: this.sregs[X86SReg.SS],
+      ds: this.sregs[X86SReg.DS],
+      fs: this.sregs[X86SReg.FS],
+      gs: this.sregs[X86SReg.GS],
     };
+  }
+
+  setRegisters(regs: X86Registers): void {
+    this.regs[X86Reg.EAX] = regs.eax;
+    this.regs[X86Reg.ECX] = regs.ecx;
+    this.regs[X86Reg.EDX] = regs.edx;
+    this.regs[X86Reg.EBX] = regs.ebx;
+    this.regs[X86Reg.ESP] = regs.esp;
+    this.regs[X86Reg.EBP] = regs.ebp;
+    this.regs[X86Reg.ESI] = regs.esi;
+    this.regs[X86Reg.EDI] = regs.edi;
+    this.regs[X86Reg.EIP] = regs.eip;
+    this.regs[X86Reg.EFLAGS] = regs.eflags;
+    this.sregs[X86SReg.ES] = regs.es;
+    this.sregs[X86SReg.CS] = regs.cs;
+    this.sregs[X86SReg.SS] = regs.ss;
+    this.sregs[X86SReg.DS] = regs.ds;
+    this.sregs[X86SReg.FS] = regs.fs;
+    this.sregs[X86SReg.GS] = regs.gs;
   }
 
   setFlag(flag: X86Flag, value: boolean): void {
     if (value) {
-      this.regs[<number> X86Reg.EFLAGS] |= (1 << <number>flag);
+      this.regs[X86Reg.EFLAGS] |= (1 << <number>flag);
     } else {
-      this.regs[<number> X86Reg.EFLAGS] &= ~(1 << <number>flag);
+      this.regs[X86Reg.EFLAGS] &= ~(1 << <number>flag);
     }
   }
 
   getFlag(flag: X86Flag): boolean {
-    return (this.regs[<number> X86Reg.EFLAGS] & (1 << <number>flag)) !== 0;
+    return (this.regs[X86Reg.EFLAGS] & (1 << <number>flag)) !== 0;
   }
 
   step(): void {
@@ -201,15 +220,15 @@ export default class X86 {
       break;
       case 16:
       case 17:
-        tmp = this.regs[<number> X86Reg.EFLAGS] & (1 << <number> X86Flag.CF);
+        tmp = this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF);
         this.regs[op & 0x7] = this.add(this.regs[op & 0x7], 1, true);
-        this.regs[<number> X86Reg.EFLAGS] |= tmp;
+        this.regs[X86Reg.EFLAGS] |= tmp;
       break;
       case 18:
       case 19:
-        tmp = this.regs[<number> X86Reg.EFLAGS] & (1 << <number> X86Flag.CF);
+        tmp = this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF);
         this.regs[op & 0x7] = this.sub(this.regs[op & 0x7], 1, true);
-        this.regs[<number> X86Reg.EFLAGS] |= tmp;
+        this.regs[X86Reg.EFLAGS] |= tmp;
       break;
       case 20:
       case 21:
@@ -259,10 +278,10 @@ export default class X86 {
   }
 
   private nextInstByte(): number {
-    const tw = this.mem.readWord(this.regs[<number> X86Reg.EIP] & ~0x3);
-    const offs = this.regs[<number> X86Reg.EIP] & 0x3;
+    const tw = this.mem.readWord(this.regs[X86Reg.EIP] & ~0x3);
+    const offs = this.regs[X86Reg.EIP] & 0x3;
     const op = (tw >> (offs << 3)) & 0xFF;
-    ++this.regs[<number> X86Reg.EIP];
+    ++this.regs[X86Reg.EIP];
 
     return op;
   }
@@ -423,33 +442,33 @@ export default class X86 {
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
-    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
-    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << X86Flag.PF;
     return r;
   }
 
   private adc(a: number, b: number, w: boolean): number {
-    const cf = (this.regs[X86Reg.EFLAGS] >> (<number> X86Flag.CF)) & 1;
+    const cf = (this.regs[X86Reg.EFLAGS] >> (X86Flag.CF)) & 1;
     const r = a + b + cf;
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
     this.regs[X86Reg.EFLAGS] |= ((a & n) == (b & n) && (a & n) != (r & n) ? 1 : 0)
-        << <number> X86Flag.OF;
-    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
+        << X86Flag.OF;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << X86Flag.ZF;
     this.regs[X86Reg.EFLAGS] |= ((a & 0xF) + (b & 0xF) + cf > 0xF ? 1 : 0)
-        << <number> X86Flag.AF;
-    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) != (r | 0) ? 1 : 0) << <number> X86Flag.CF;
+        << X86Flag.AF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) != (r | 0) ? 1 : 0) << X86Flag.CF;
     return r & m;
   }
 
   private sbb(a: number, b: number, w: boolean): number {
-    this.regs[X86Reg.EFLAGS] ^= 1 << <number> X86Flag.CF;
+    this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
     const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
-    this.regs[X86Reg.EFLAGS] ^= 1 << <number> X86Flag.CF;
+    this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
     return r;
   }
 
@@ -458,14 +477,15 @@ export default class X86 {
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
-    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
-    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << X86Flag.PF;
     return r;
   }
 
   private sub(a: number, b: number, w: boolean): number {
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
+    this.regs[X86Reg.EFLAGS] |= 1 << X86Flag.CF;
     return this.sbb(a, b, w);
   }
 
@@ -474,9 +494,9 @@ export default class X86 {
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
-    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << <number> X86Flag.SF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << <number> X86Flag.ZF;
-    this.regs[X86Reg.EFLAGS] |= this.parity(a) << <number> X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= ((r & n) != 0 ? 1 : 0) << X86Flag.SF;
+    this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << X86Flag.ZF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(a) << X86Flag.PF;
     return r;
   }
 

@@ -456,6 +456,7 @@ class X86 {
     }
     sub(a, b, w) {
         this.regs[9] &= ARITH_FLAG_CLEAR;
+        this.regs[9] |= 1 << 0;
         return this.sbb(a, b, w);
     }
     xor(a, b, w) {
