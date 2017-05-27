@@ -25,10 +25,15 @@ export interface X86RegistersOpt {
   gs?: number;
 }
 
-function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X86 {
+const REG8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
+const REG16 = ['ax', 'cx', 'dx', 'bx', 'sp', 'bp', 'si', 'di'];
+const REG32 = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
+
+function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt,
+    textLength?: number, stackLength?: number): X86 {
   const mem = new MemoryManager({
-    textLength: 256,
-    stackLength: 256,
+    textLength: textLength || 256,
+    stackLength: stackLength || 256,
   });
   if (typeof regs === 'undefined') { regs = {}; }
   regs = {...regs};
@@ -71,14 +76,42 @@ function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt): X
 
   return new X86(mem, <X86Registers> regs);
 }
-
+function annotatedTestEqualHex(test: any, a: number, b: number, pfx: string) {
+  a = ((a | 0) + 4294967296) % 4294967296;
+  b = ((b | 0) + 4294967296) % 4294967296;
+  test.equal(a, b, pfx + ' expected=' + b.toString(16) + ' actual='
+      + a.toString(16));
+}
+function getReg8(regs: X86RegistersOpt, reg: number): number {
+  switch (reg) {
+    case 0: return regs.eax & 0xFF;
+    case 1: return regs.ecx & 0xFF;
+    case 2: return regs.edx & 0xFF;
+    case 3: return regs.ebx & 0xFF;
+    case 4: return (regs.eax >> 8) & 0xFF;
+    case 5: return (regs.ecx >> 8) & 0xFF;
+    case 6: return (regs.edx >> 8) & 0xFF;
+    case 7: return (regs.ebx >> 8) & 0xFF;
+    default: throw new Error('bad register #: ' + reg);
+  }
+}
+function getReg32(regs: X86RegistersOpt, reg: number): number {
+  switch (reg) {
+    case 0: return regs.eax;
+    case 1: return regs.ecx;
+    case 2: return regs.edx;
+    case 3: return regs.ebx;
+    case 4: return regs.esp;
+    case 5: return regs.ebp;
+    case 6: return regs.esi;
+    case 7: return regs.edi;
+    default: throw new Error('bad register #: ' + reg);
+  }
+}
 function compareRegs(test: any, x86: X86, regs: X86RegistersOpt, e?: string): void {
   let aregs = x86.getRegisters();
-  let cmp = (a, b, name) => {
-    a = ((a | 0) + 4294967296) % 4294967296;
-    b = ((b | 0) + 4294967296) % 4294967296;
-    test.equal(a, b, (e || '') + ' reg=' + name + ' expected='
-        + b.toString(16) + ' actual=' + a.toString(16));
+  let cmp = (a: number, b: number, name: string): void => {
+    annotatedTestEqualHex(test, a, b, (e || '') + ' reg=' + name);
   };
   if (typeof regs.eax !== 'undefined') { cmp(aregs.eax, regs.eax, 'eax'); }
   if (typeof regs.ecx !== 'undefined') { cmp(aregs.ecx, regs.ecx, 'ecx'); }
@@ -99,7 +132,6 @@ function compareRegs(test: any, x86: X86, regs: X86RegistersOpt, e?: string): vo
   if (typeof regs.fs !== 'undefined') { cmp(aregs.fs, regs.fs, 'fs'); }
   if (typeof regs.gs !== 'undefined') { cmp(aregs.gs, regs.gs, 'gs'); }
 }
-
 function setRegs(x86: X86, regs: X86RegistersOpt): void {
   let cregs = x86.getRegisters();
   if (typeof regs.eax !== 'undefined') { cregs.eax = regs.eax; }
@@ -120,7 +152,6 @@ function setRegs(x86: X86, regs: X86RegistersOpt): void {
   if (typeof regs.gs !== 'undefined') { cregs.gs = regs.gs; }
   x86.setRegisters(cregs);
 }
-
 function assignReg8(regs: X86RegistersOpt, reg: number, val: number): void {
   let mask = 0xFFFFFF00;
   val &= 0xFF;
@@ -185,13 +216,12 @@ Suite.run({
     }
 
     let x86 = prepareX86(text, undefined, regs);
-    const rn = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
     for (let i = 0; i < 8; ++i) {
       for (let j = 0; j < 8; ++j) {
         x86.step();
         let expected = {...regs};
         assignReg8(expected, j, (1 << j) - (1 << i));
-        compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
+        compareRegs(test, x86, expected, 'sub ' + REG8[j] + ', ' + REG8[i] + ':');
         setRegs(x86, regs);
       }
     }
@@ -214,13 +244,12 @@ Suite.run({
     }
 
     let x86 = prepareX86(text, undefined, regs);
-    const rn = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
     for (let i = 0; i < 8; ++i) {
       for (let j = 0; j < 8; ++j) {
         x86.step();
         let expected = {...regs};
         assignReg32(expected, j, (1 << j) - (1 << i));
-        compareRegs(test, x86, expected, 'sub ' + rn[j] + ', ' + rn[i] + ':');
+        compareRegs(test, x86, expected, 'sub ' + REG32[j] + ', ' + REG32[i] + ':');
         setRegs(x86, regs);
       }
     }
@@ -239,13 +268,12 @@ Suite.run({
     }
 
     let x86 = prepareX86(text, undefined, regs);
-    const rn = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
     for (let i = 0; i < 8; ++i) {
       for (let j = 0; j < 8; ++j) {
         x86.step();
         let expected = {...regs};
         assignReg8(expected, i, (1 << i) - (1 << j));
-        compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
+        compareRegs(test, x86, expected, 'sub ' + REG8[i] + ', ' + REG8[j] + ':');
         setRegs(x86, regs);
       }
     }
@@ -274,8 +302,183 @@ Suite.run({
         x86.step();
         let expected = {...regs};
         assignReg32(expected, i, (1 << i) - (1 << j));
-        compareRegs(test, x86, expected, 'sub ' + rn[i] + ', ' + rn[j] + ':');
+        compareRegs(test, x86, expected, 'sub ' + REG32[i] + ', ' + REG32[j] + ':');
         setRegs(x86, regs);
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm b8 mod 00': function(test: any): void {
+    let regs = {
+      eax: 0x0110 | STACK_MASK,
+      ecx: 0x0220 | STACK_MASK,
+      edx: 0x0440 | STACK_MASK,
+      ebx: 0x0880 | STACK_MASK,
+      esi: 0x0000 | STACK_MASK,
+      edi: 0x0004 | STACK_MASK,
+    };
+    let text = Array(128).fill(0x28); // sub r/m8, r8 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0x00 | i;
+    }
+    let stack = Array(65536);
+    for (let i = 0; i < 65536; ++i) {
+      stack[i] = (i >> 2) & 0xFF;
+    }
+    let x86 = prepareX86(text, stack, regs, undefined, 65536);
+    let mem = x86.getMemoryManager();
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        const cregs = x86.getRegisters();
+        cregs.eip += 2;
+
+        if (j == 4 || j == 5) {
+          // skip SIB and [disp] instructions
+          x86.setRegisters(cregs);
+          continue;
+        }
+        const tname = 'sub byte [' + REG32[j] + '], ' + REG8[i] + ':';
+        x86.step();
+        compareRegs(test, x86, regs, tname);
+
+        const original = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
+        const expected = (original - getReg8(regs, i)) & 0xFF;
+        const actual = mem.readWord(getReg32(regs, j)) & 0xFF;
+        annotatedTestEqualHex(test, actual, expected, tname);
+        mem.writeWord(getReg32(regs, j), original | original << 8 | original << 16
+            | original << 24);
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm b32 mod 00': function(test: any): void {
+    let regs = {
+      eax: 0x0110 | STACK_MASK,
+      ecx: 0x0220 | STACK_MASK,
+      edx: 0x0440 | STACK_MASK,
+      ebx: 0x0880 | STACK_MASK,
+      esp: 0x3030 | STACK_MASK,
+      ebp: 0x5050 | STACK_MASK,
+      esi: 0x0000 | STACK_MASK,
+      edi: 0x0004 | STACK_MASK,
+    };
+    let text = Array(128).fill(0x29); // sub r/m32, r32 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0x00 | i;
+    }
+    let stack = Array(65536);
+    for (let i = 0; i < 65536; ++i) {
+      stack[i] = (i >> 2) & 0xFF;
+    }
+    let x86 = prepareX86(text, stack, regs, undefined, 65536);
+    let mem = x86.getMemoryManager();
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        const cregs = x86.getRegisters();
+        cregs.eip += 2;
+
+        if (j == 4 || j == 5) {
+          // skip SIB and [disp] instructions
+          x86.setRegisters(cregs);
+          continue;
+        }
+        const tname = 'sub dword [' + REG32[j] + '], ' + REG32[i] + ':';
+        x86.step();
+        compareRegs(test, x86, regs, tname);
+
+        let original = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
+        original |= original << 8 | original << 16 | original << 24;
+        const expected = original - getReg32(regs, i);
+        const actual = mem.readWord(getReg32(regs, j));
+        annotatedTestEqualHex(test, actual, expected, tname);
+        mem.writeWord(getReg32(regs, j), original);
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm b8 mod 00 direction': function(test: any): void {
+    let regs = {
+      eax: 0x0110 | STACK_MASK,
+      ecx: 0x0220 | STACK_MASK,
+      edx: 0x0440 | STACK_MASK,
+      ebx: 0x0880 | STACK_MASK,
+      esi: 0x0000 | STACK_MASK,
+      edi: 0x0004 | STACK_MASK,
+    };
+    let text = Array(128).fill(0x29); // sub r8, r/m8 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0x00 | i;
+    }
+    let stack = Array(65536);
+    for (let i = 0; i < 65536; ++i) {
+      stack[i] = (i >> 2) & 0xFF;
+    }
+    let x86 = prepareX86(text, stack, regs, undefined, 65536);
+    let mem = x86.getMemoryManager();
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        const cregs = x86.getRegisters();
+        cregs.eip += 2;
+
+        if (j == 4 || j == 5) {
+          // skip SIB and [disp] instructions
+          x86.setRegisters(cregs);
+          continue;
+        }
+        const tname = 'sub ' + REG8[i] + ', byte [' + REG32[i] + ']:';
+        x86.step();
+
+        const memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
+        const expected = (getReg8(regs, i) - memory) & 0xFF;
+        const actual = getReg8(cregs, i);
+        annotatedTestEqualHex(test, actual, expected, tname);
+        assignReg8(cregs, i, getReg8(regs, i));
+        setRegs(x86, cregs);
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm b32 mod 00 direction': function(test: any): void {
+    let regs = {
+      eax: 0x0110 | STACK_MASK,
+      ecx: 0x0220 | STACK_MASK,
+      edx: 0x0440 | STACK_MASK,
+      ebx: 0x0880 | STACK_MASK,
+      esp: 0x3030 | STACK_MASK,
+      ebp: 0x5050 | STACK_MASK,
+      esi: 0x0000 | STACK_MASK,
+      edi: 0x0004 | STACK_MASK,
+    };
+    let text = Array(128).fill(0x2B); // sub r32, r/m32 to also check direction
+    for (let i = 0; i < 64; ++i) {
+      text[2 * i + 1] = 0x00 | i;
+    }
+    let stack = Array(65536);
+    for (let i = 0; i < 65536; ++i) {
+      stack[i] = (i >> 2) & 0xFF;
+    }
+    let x86 = prepareX86(text, stack, regs, undefined, 65536);
+    let mem = x86.getMemoryManager();
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        const cregs = x86.getRegisters();
+        cregs.eip += 2;
+
+        if (j == 4 || j == 5) {
+          // skip SIB and [disp] instructions
+          x86.setRegisters(cregs);
+          continue;
+        }
+        const tname = 'sub ' + REG32[i] + ', dword [' + REG32[j] + ']:';
+        x86.step();
+
+        let memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
+        memory |= memory << 8 | memory << 16 | memory << 24;
+        const expected = getReg32(regs, i) - memory;
+        const actual = getReg32(cregs, i);
+        annotatedTestEqualHex(test, actual, expected, tname);
+        assignReg32(cregs, i, getReg32(regs, i));
+        setRegs(x86, cregs);
       }
     }
     test.done();
