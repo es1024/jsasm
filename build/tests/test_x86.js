@@ -554,5 +554,95 @@ Suite.run({
         }
         test.done();
     },
+    'mod/reg/rm b8 [disp]': function (test) {
+        let regs = {
+            eax: 0xDEAD1001,
+            ecx: 0xDEAD2002,
+            edx: 0xDEAD4004,
+            ebx: 0xDEAD8008,
+        };
+        let text = Array(48).fill(0x28).concat(Array(48).fill(0x2A));
+        for (let i = 0; i < 16; ++i) {
+            text[6 * i + 1] = 0x05 | ((i & 7) << 3);
+            text[6 * i + 2] = (address_1.STACK_MASK | (i << 2)) & 0xFF;
+            text[6 * i + 3] = (address_1.STACK_MASK >> 8) & 0xFF;
+            text[6 * i + 4] = (address_1.STACK_MASK >> 16) & 0xFF;
+            text[6 * i + 5] = (address_1.STACK_MASK >> 24) & 0xFF;
+        }
+        let stack = Array(256);
+        for (let i = 0; i < 256; ++i) {
+            stack[i] = (i >> 2) & 0xFF;
+        }
+        let x86 = prepareX86(text, stack, regs);
+        let mem = x86.getMemoryManager();
+        for (let i = 0; i < 8; ++i) {
+            const addr = ((address_1.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
+            const tname = 'sub byte [0x' + addr.toString(16) + '], ' + REG8[i] + ':';
+            x86.step();
+            compareRegs(test, x86, regs, tname);
+            const expected = (i - (1 << i)) & 0xFF;
+            const actual = mem.readWord(addr) & 0xFF;
+            annotatedTestEqualHex(test, actual, expected, tname);
+        }
+        for (let i = 8; i < 16; ++i) {
+            const addr = ((address_1.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
+            const tname = 'sub ' + REG8[i & 7] + ', byte [0x' + addr.toString(16) + ']:';
+            x86.step();
+            annotatedTestEqualHex(test, mem.readWord(addr) & 0xFF, i, tname);
+            const expected = Object.assign({}, regs);
+            assignReg8(expected, i & 7, ((1 << (i & 7)) - i) & 0xFF);
+            compareRegs(test, x86, expected, tname);
+            setRegs(x86, regs);
+        }
+        test.done();
+    },
+    'mod/reg/rm b32 [disp]': function (test) {
+        let regs = {
+            eax: 0x01,
+            ecx: 0x02,
+            edx: 0x04,
+            ebx: 0x08,
+            esp: 0x10,
+            ebp: 0x20,
+            esi: 0x40,
+            edi: 0x80,
+        };
+        let text = Array(48).fill(0x29).concat(Array(48).fill(0x2B));
+        for (let i = 0; i < 16; ++i) {
+            text[6 * i + 1] = 0x05 | ((i & 7) << 3);
+            text[6 * i + 2] = (address_1.STACK_MASK | (i << 2)) & 0xFF;
+            text[6 * i + 3] = (address_1.STACK_MASK >> 8) & 0xFF;
+            text[6 * i + 4] = (address_1.STACK_MASK >> 16) & 0xFF;
+            text[6 * i + 5] = (address_1.STACK_MASK >> 24) & 0xFF;
+        }
+        let stack = Array(256);
+        for (let i = 0; i < 256; ++i) {
+            stack[i] = (i >> 2) & 0xFF;
+        }
+        let x86 = prepareX86(text, stack, regs);
+        let mem = x86.getMemoryManager();
+        for (let i = 0; i < 8; ++i) {
+            const addr = ((address_1.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
+            const tname = 'sub dword [0x' + addr.toString(16) + '], ' + REG32[i] + ':';
+            x86.step();
+            compareRegs(test, x86, regs, tname);
+            const orig = i | i << 8 | i << 16 | i << 24;
+            const expected = (orig - (1 << i));
+            const actual = mem.readWord(addr);
+            annotatedTestEqualHex(test, actual, expected, tname);
+        }
+        for (let i = 8; i < 16; ++i) {
+            const addr = ((address_1.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
+            const tname = 'sub ' + REG32[i & 7] + ', dword [0x' + addr.toString(16) + ']:';
+            x86.step();
+            const orig = i | i << 8 | i << 16 | i << 24;
+            annotatedTestEqualHex(test, mem.readWord(addr), orig, tname);
+            const expected = Object.assign({}, regs);
+            assignReg32(expected, i & 7, (1 << (i & 7)) - orig);
+            compareRegs(test, x86, expected, tname);
+            setRegs(x86, regs);
+        }
+        test.done();
+    },
 });
 //# sourceMappingURL=test_x86.js.map
