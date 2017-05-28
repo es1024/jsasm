@@ -275,12 +275,12 @@ function assignReg32(regs, reg, val) {
 Suite.run({
     'single byte instruction extraction': function (test) {
         let x86;
-        let text = Array(256).fill(0xFF);
+        let text = Array(64).fill(0xFF);
         let step = () => { x86.step(); };
         x86 = prepareX86(text);
         let initEIP = x86.getRegisters().eip;
         test.throws(step, sigill_1.default);
-        for (let i = 0; i < 255; ++i) {
+        for (let i = 0; i < 63; ++i) {
             text[i] = 0x90;
             if (i > 0) {
                 test[i - 1] = 0xFF;
@@ -406,11 +406,11 @@ Suite.run({
         for (let i = 0; i < 64; ++i) {
             text[2 * i + 1] = 0x00 | i;
         }
-        let stack = Array(65536);
-        for (let i = 0; i < 65536; ++i) {
+        let stack = Array(2500);
+        for (let i = 0; i < 2500; ++i) {
             stack[i] = (i >> 2) & 0xFF;
         }
-        let x86 = prepareX86(text, stack, regs, undefined, 65536);
+        let x86 = prepareX86(text, stack, regs, undefined, 2500);
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
@@ -448,11 +448,11 @@ Suite.run({
         for (let i = 0; i < 64; ++i) {
             text[2 * i + 1] = 0x00 | i;
         }
-        let stack = Array(65536);
-        for (let i = 0; i < 65536; ++i) {
+        let stack = Array(2500);
+        for (let i = 0; i < 2500; ++i) {
             stack[i] = (i >> 2) & 0xFF;
         }
-        let x86 = prepareX86(text, stack, regs, undefined, 65536);
+        let x86 = prepareX86(text, stack, regs, undefined, 2500);
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
@@ -488,11 +488,11 @@ Suite.run({
         for (let i = 0; i < 64; ++i) {
             text[2 * i + 1] = 0x00 | i;
         }
-        let stack = Array(65536);
-        for (let i = 0; i < 65536; ++i) {
+        let stack = Array(2500);
+        for (let i = 0; i < 2500; ++i) {
             stack[i] = (i >> 2) & 0xFF;
         }
-        let x86 = prepareX86(text, stack, regs, undefined, 65536);
+        let x86 = prepareX86(text, stack, regs, undefined, 2500);
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
@@ -528,11 +528,11 @@ Suite.run({
         for (let i = 0; i < 64; ++i) {
             text[2 * i + 1] = 0x00 | i;
         }
-        let stack = Array(65536);
-        for (let i = 0; i < 65536; ++i) {
+        let stack = Array(2500);
+        for (let i = 0; i < 2500; ++i) {
             stack[i] = (i >> 2) & 0xFF;
         }
-        let x86 = prepareX86(text, stack, regs, undefined, 65536);
+        let x86 = prepareX86(text, stack, regs, undefined, 2500);
         let mem = x86.getMemoryManager();
         for (let i = 0; i < 8; ++i) {
             for (let j = 0; j < 8; ++j) {
