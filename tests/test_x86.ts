@@ -1,5 +1,6 @@
 import * as Suite from 'testjs';
 
+import {getAddressOffset, isStackAddress} from '../src/address';
 import {TEXT_MASK, STACK_MASK} from '../src/address';
 import MemoryManager from '../src/memory';
 import SIGBASE from '../src/error/sigbase';
@@ -29,9 +30,24 @@ const REG8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
 const REG16 = ['ax', 'cx', 'dx', 'bx', 'sp', 'bp', 'si', 'di'];
 const REG32 = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
 
+class CircularStackMemoryManager extends MemoryManager {
+  readWord(addr: number): number {
+    if (isStackAddress(addr)) {
+      addr = STACK_MASK | (getAddressOffset(addr) % (this.stack.length << 2));
+    }
+    return super.readWord(addr);
+  }
+  writeWord(addr: number, value: number): void {
+    if (isStackAddress(addr)) {
+      addr = STACK_MASK | (getAddressOffset(addr) % (this.stack.length << 2));
+    }
+    super.writeWord(addr, value);
+  }
+}
+
 function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt,
     textLength?: number, stackLength?: number): X86 {
-  const mem = new MemoryManager({
+  const mem = new CircularStackMemoryManager({
     textLength: textLength || 256,
     stackLength: stackLength || 256,
   });
@@ -160,10 +176,10 @@ function assignReg8(regs: X86RegistersOpt, reg: number, val: number): void {
     mask = 0xFFFF00FF;
   }
   switch (reg & 0x3) {
-    case 0: regs.eax = regs.eax & mask | val; break;
-    case 1: regs.ecx = regs.ecx & mask | val; break;
-    case 2: regs.edx = regs.edx & mask | val; break;
-    case 3: regs.ebx = regs.ebx & mask | val; break;
+    case 0: regs.eax = (regs.eax || 0) & mask | val; break;
+    case 1: regs.ecx = (regs.ecx || 0) & mask | val; break;
+    case 2: regs.edx = (regs.edx || 0) & mask | val; break;
+    case 3: regs.ebx = (regs.ebx || 0) & mask | val; break;
   }
 }
 function assignReg32(regs: X86RegistersOpt, reg: number, val: number): void {
@@ -180,6 +196,82 @@ function assignReg32(regs: X86RegistersOpt, reg: number, val: number): void {
   }
 }
 
+const testHelpers = {
+  'mod/reg/rm non-SIB/disp': function(test: any, mode: number, reg: number,
+        ireg: number, dir: boolean, bits: number, shift: number,
+        sign: number): void {
+    let disp = sign * [0, 0x7A, 0x7436FE][mode];
+    let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
+    const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
+    const uregs = {
+      eax: 0,
+      ecx: 0,
+      edx: 0,
+      ebx: 0,
+      esp: 0,
+      ebp: 0,
+      esi: 0,
+      edi: 0,
+    };
+    const assignReg = bits == 8 ? assignReg8 : assignReg32;
+    const getReg = bits == 8 ? getReg8 : getReg32;
+    const REG = bits == 8 ? REG8 : REG32;
+    assignReg(uregs, reg, rval);
+    assignReg32(uregs, ireg, (rval + shift - disp) | STACK_MASK);
+    rval = getReg(uregs, reg);
+
+    const text = Array(6);
+    text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1); // subtract
+    text[1] = mode << 6 | reg << 3 | ireg;
+    for (let i = 0; i < (bits >> 3); ++i) {
+      text[i + 2] = (disp >> (i << 3)) & 0xFF;
+    }
+    const stack = Array(8);
+    for (let i = 0; i < 8; ++i) {
+      stack[i] = i;
+    }
+    const x86 = prepareX86(text, stack, uregs, 8, 8);
+    const mem = x86.getMemoryManager();
+
+    let dstr = '';
+    if (disp) {
+      dstr = (disp > 0 ? ' + ' : ' - ') + '0x' + Math.abs(disp).toString(16);
+    }
+
+    x86.step();
+    if (!dir) {
+      const tname = 'sub ' + ['byte', 'dword'][bits == 8 ? 0 : 1] + ' ['
+          + REG32[ireg] + dstr + '], ' + REG[reg] + '; shift=' + shift + ':';
+      compareRegs(test, x86, uregs, tname);
+
+      const expected = ((shift | (shift + 1) << 8 | (shift + 2) << 16
+          | (shift + 3) << 24) - rval) & mask;
+      const w1 = mem.readWord(0 | STACK_MASK);
+      const w2 = mem.readWord(4 | STACK_MASK);
+      let actual = w1 >> (shift << 3);
+      if (shift) {
+        actual |= w2 << ((4 - shift) << 3);
+      }
+      actual &= mask;
+      annotatedTestEqualHex(test, actual, expected, tname);
+    } else {
+      const tname = 'sub ' + REG[reg] + ', ' + ['byte', 'dword'][bits == 8 ? 0 : 1]
+          + ' [' + REG32[ireg] + dstr + ']; shift=' + shift + ':';
+
+      annotatedTestEqualHex(test, mem.readWord(0 | STACK_MASK), 0x03020100, tname);
+      annotatedTestEqualHex(test, mem.readWord(4 | STACK_MASK), 0x07060504, tname);
+
+      let memValue = 0;
+      for (let i = 0; i < 4; ++i) {
+        memValue |= (i + shift) << (i << 3);
+      }
+
+      const expected = {...uregs};
+      assignReg(expected, reg, getReg(expected, reg) - (memValue & mask));
+      compareRegs(test, x86, expected, tname);
+    }
+  },
+};
 Suite.run({
   'single byte instruction extraction': function(test: any): void {
     let x86: X86;
@@ -308,170 +400,26 @@ Suite.run({
     }
     test.done();
   },
-  'mod/reg/rm b8 mod 00': function(test: any): void {
-    let regs = {
-      eax: 0x0110 | STACK_MASK,
-      ecx: 0x0220 | STACK_MASK,
-      edx: 0x0440 | STACK_MASK,
-      ebx: 0x0880 | STACK_MASK,
-      esi: 0x0000 | STACK_MASK,
-      edi: 0x0004 | STACK_MASK,
-    };
-    let text = Array(128).fill(0x28); // sub r/m8, r8 to also check direction
-    for (let i = 0; i < 64; ++i) {
-      text[2 * i + 1] = 0x00 | i;
-    }
-    let stack = Array(2500);
-    for (let i = 0; i < 2500; ++i) {
-      stack[i] = (i >> 2) & 0xFF;
-    }
-    let x86 = prepareX86(text, stack, regs, undefined, 2500);
-    let mem = x86.getMemoryManager();
-    for (let i = 0; i < 8; ++i) {
-      for (let j = 0; j < 8; ++j) {
-        if (j == 4 || j == 5) {
-          const cregs = x86.getRegisters();
-          cregs.eip += 2;
-          // skip SIB and [disp] instructions
-          x86.setRegisters(cregs);
-          continue;
+  'mod/reg/rm offset non-SIB/disp': function(test: any): void {
+    const bitv = [32, 8];
+    for (let bits = bitv.length; bits--; ) {
+      for (let mode = 0; mode < 3; ++mode) {
+        for (let reg = 0; reg < 8; ++reg) {
+          for (let ireg = 0; ireg < 8; ++ireg) {
+            if (ireg == 4) continue; // SIB
+            if (ireg == 5 && mode == 0) continue; // disp
+            for (let shift = 0; shift < 4; ++shift) {
+              testHelpers['mod/reg/rm non-SIB/disp'](test, mode, reg, ireg,
+                  false, bitv[bits], shift, +1);
+              testHelpers['mod/reg/rm non-SIB/disp'](test, mode, reg, ireg,
+                  false, bitv[bits], shift, -1);
+              testHelpers['mod/reg/rm non-SIB/disp'](test, mode, reg, ireg,
+                  true, bitv[bits], shift, +1);
+              testHelpers['mod/reg/rm non-SIB/disp'](test, mode, reg, ireg,
+                  true, bitv[bits], shift, -1);
+            }
+          }
         }
-        const tname = 'sub byte [' + REG32[j] + '], ' + REG8[i] + ':';
-        x86.step();
-        compareRegs(test, x86, regs, tname);
-
-        const original = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
-        const expected = (original - getReg8(regs, i)) & 0xFF;
-        const actual = mem.readWord(getReg32(regs, j)) & 0xFF;
-        annotatedTestEqualHex(test, actual, expected, tname);
-        mem.writeWord(getReg32(regs, j), original | original << 8 | original << 16
-            | original << 24);
-      }
-    }
-    test.done();
-  },
-  'mod/reg/rm b32 mod 00': function(test: any): void {
-    let regs = {
-      eax: 0x0110 | STACK_MASK,
-      ecx: 0x0220 | STACK_MASK,
-      edx: 0x0440 | STACK_MASK,
-      ebx: 0x0880 | STACK_MASK,
-      esp: 0x3030 | STACK_MASK,
-      ebp: 0x5050 | STACK_MASK,
-      esi: 0x0000 | STACK_MASK,
-      edi: 0x0004 | STACK_MASK,
-    };
-    let text = Array(128).fill(0x29); // sub r/m32, r32 to also check direction
-    for (let i = 0; i < 64; ++i) {
-      text[2 * i + 1] = 0x00 | i;
-    }
-    let stack = Array(2500);
-    for (let i = 0; i < 2500; ++i) {
-      stack[i] = (i >> 2) & 0xFF;
-    }
-    let x86 = prepareX86(text, stack, regs, undefined, 2500);
-    let mem = x86.getMemoryManager();
-    for (let i = 0; i < 8; ++i) {
-      for (let j = 0; j < 8; ++j) {
-        if (j == 4 || j == 5) {
-          const cregs = x86.getRegisters();
-          cregs.eip += 2;
-          // skip SIB and [disp] instructions
-          x86.setRegisters(cregs);
-          continue;
-        }
-        const tname = 'sub dword [' + REG32[j] + '], ' + REG32[i] + ':';
-        x86.step();
-        compareRegs(test, x86, regs, tname);
-
-        let original = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
-        original |= original << 8 | original << 16 | original << 24;
-        const expected = original - getReg32(regs, i);
-        const actual = mem.readWord(getReg32(regs, j));
-        annotatedTestEqualHex(test, actual, expected, tname);
-        mem.writeWord(getReg32(regs, j), original);
-      }
-    }
-    test.done();
-  },
-  'mod/reg/rm b8 mod 00 direction': function(test: any): void {
-    let regs = {
-      eax: 0x0110 | STACK_MASK,
-      ecx: 0x0220 | STACK_MASK,
-      edx: 0x0440 | STACK_MASK,
-      ebx: 0x0880 | STACK_MASK,
-      esi: 0x0000 | STACK_MASK,
-      edi: 0x0004 | STACK_MASK,
-    };
-    let text = Array(128).fill(0x2A); // sub r8, r/m8 to also check direction
-    for (let i = 0; i < 64; ++i) {
-      text[2 * i + 1] = 0x00 | i;
-    }
-    let stack = Array(2500);
-    for (let i = 0; i < 2500; ++i) {
-      stack[i] = (i >> 2) & 0xFF;
-    }
-    let x86 = prepareX86(text, stack, regs, undefined, 2500);
-    let mem = x86.getMemoryManager();
-    for (let i = 0; i < 8; ++i) {
-      for (let j = 0; j < 8; ++j) {
-        if (j == 4 || j == 5) {
-          const cregs = x86.getRegisters();
-          cregs.eip += 2;
-          // skip SIB and [disp] instructions
-          x86.setRegisters(cregs);
-          continue;
-        }
-        const tname = 'sub ' + REG8[i] + ', byte [' + REG32[i] + ']:';
-        x86.step();
-        const memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
-        const expected = {...regs};
-        assignReg8(expected, i, (getReg8(regs, i) - memory) & 0xFF);
-        compareRegs(test, x86, expected, tname);
-        setRegs(x86, regs);
-      }
-    }
-    test.done();
-  },
-  'mod/reg/rm b32 mod 00 direction': function(test: any): void {
-    let regs = {
-      eax: 0x0110 | STACK_MASK,
-      ecx: 0x0220 | STACK_MASK,
-      edx: 0x0440 | STACK_MASK,
-      ebx: 0x0880 | STACK_MASK,
-      esp: 0x3030 | STACK_MASK,
-      ebp: 0x5050 | STACK_MASK,
-      esi: 0x0000 | STACK_MASK,
-      edi: 0x0004 | STACK_MASK,
-    };
-    let text = Array(128).fill(0x2B); // sub r32, r/m32 to also check direction
-    for (let i = 0; i < 64; ++i) {
-      text[2 * i + 1] = 0x00 | i;
-    }
-    let stack = Array(2500);
-    for (let i = 0; i < 2500; ++i) {
-      stack[i] = (i >> 2) & 0xFF;
-    }
-    let x86 = prepareX86(text, stack, regs, undefined, 2500);
-    let mem = x86.getMemoryManager();
-    for (let i = 0; i < 8; ++i) {
-      for (let j = 0; j < 8; ++j) {
-        if (j == 4 || j == 5) {
-          const cregs = x86.getRegisters();
-          cregs.eip += 2;
-          // skip SIB and [disp] instructions
-          x86.setRegisters(cregs);
-          continue;
-        }
-        const tname = 'sub ' + REG32[i] + ', dword [' + REG32[j] + ']:';
-        x86.step();
-
-        let memory = ((getReg32(regs, j) & 0xFFFF) >> 2) & 0xFF;
-        memory |= memory << 8 | memory << 16 | memory << 24;
-        const expected = {...regs};
-        assignReg32(expected, i, getReg32(regs, i) - memory);
-        compareRegs(test, x86, expected, tname);
-        setRegs(x86, regs);
       }
     }
     test.done();
