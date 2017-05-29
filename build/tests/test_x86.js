@@ -390,6 +390,73 @@ const testHelpers = {
             compareRegs(test, x86, expected, tname);
         }
     },
+    'mod/reg/rm [disp]': function (test, reg, dir, bits, offset) {
+        const r1val = [0xA0, 0x1A817408][bits == 8 ? 0 : 1];
+        const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
+        const disp = address_2.STACK_MASK | offset;
+        const uregs = {
+            eax: 0,
+            ecx: 0,
+            edx: 0,
+            ebx: 0,
+            esp: 0,
+            ebp: 0,
+            esi: 0,
+            edi: 0,
+        };
+        const assignReg = bits == 8 ? assignReg8 : assignReg32;
+        const getReg = bits == 8 ? getReg8 : getReg32;
+        const REG = bits == 8 ? REG8 : REG32;
+        assignReg(uregs, reg, r1val);
+        const text = Array(2);
+        text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1);
+        text[1] = reg << 3 | 0x05;
+        text[2] = disp & 0xFF;
+        text[3] = (disp >>> 8) & 0xFF;
+        text[4] = (disp >>> 16) & 0xFF;
+        text[5] = (disp >>> 24) & 0xFF;
+        const stack = Array(8);
+        for (let i = stack.length; i--;) {
+            stack[i] = i;
+        }
+        const x86 = prepareX86(text, stack, uregs, 8, 8);
+        const mem = x86.getMemoryManager();
+        x86.step();
+        let memoryVal = 0;
+        for (let i = 0; i < 4; ++i) {
+            memoryVal |= (i + offset) << (i << 3);
+        }
+        if (dir) {
+            const tname = 'sub ' + REG[reg] + ', [0x' + disp.toString(16) + ']:';
+            const expected = Object.assign({}, uregs);
+            assignReg(expected, reg, (r1val - (memoryVal & mask)) & mask);
+            compareRegs(test, x86, expected, tname);
+            annotatedTestEqualHex(test, mem.readWord(0 | address_2.STACK_MASK), 0x03020100, tname);
+            annotatedTestEqualHex(test, mem.readWord(4 | address_2.STACK_MASK), 0x07060504, tname);
+        }
+        else {
+            const tname = 'sub [0x' + disp.toString(16) + '], ' + REG[reg] + ':';
+            let wA = 0x03020100, wB = 0x07060504;
+            const v = ((memoryVal & mask) - r1val) & mask;
+            if (bits == 8) {
+                wA &= ~(0xFF << (offset << 3));
+                wA |= v << (offset << 3);
+            }
+            else if (offset) {
+                const lmask = (1 << (offset << 3)) - 1;
+                wA &= lmask;
+                wA |= v << (offset << 3);
+                wB &= ~lmask;
+                wB |= v >>> ((4 - offset) << 3);
+            }
+            else {
+                wA = v;
+            }
+            annotatedTestEqualHex(test, mem.readWord(0 | address_2.STACK_MASK), wA, tname);
+            annotatedTestEqualHex(test, mem.readWord(4 | address_2.STACK_MASK), wB, tname);
+            compareRegs(test, x86, uregs, tname);
+        }
+    },
 };
 Suite.run({
     'single byte instruction extraction': function (test) {
@@ -445,93 +512,15 @@ Suite.run({
         }
         test.done();
     },
-    'mod/reg/rm b8 [disp]': function (test) {
-        let regs = {
-            eax: 0xDEAD1001,
-            ecx: 0xDEAD2002,
-            edx: 0xDEAD4004,
-            ebx: 0xDEAD8008,
-        };
-        let text = Array(48).fill(0x28).concat(Array(48).fill(0x2A));
-        for (let i = 0; i < 16; ++i) {
-            text[6 * i + 1] = 0x05 | ((i & 7) << 3);
-            text[6 * i + 2] = (address_2.STACK_MASK | (i << 2)) & 0xFF;
-            text[6 * i + 3] = (address_2.STACK_MASK >>> 8) & 0xFF;
-            text[6 * i + 4] = (address_2.STACK_MASK >>> 16) & 0xFF;
-            text[6 * i + 5] = (address_2.STACK_MASK >>> 24) & 0xFF;
-        }
-        let stack = Array(256);
-        for (let i = 0; i < 256; ++i) {
-            stack[i] = (i >>> 2) & 0xFF;
-        }
-        let x86 = prepareX86(text, stack, regs);
-        let mem = x86.getMemoryManager();
-        for (let i = 0; i < 8; ++i) {
-            const addr = ((address_2.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
-            const tname = 'sub byte [0x' + addr.toString(16) + '], ' + REG8[i] + ':';
-            x86.step();
-            compareRegs(test, x86, regs, tname);
-            const expected = (i - (1 << i)) & 0xFF;
-            const actual = mem.readWord(addr) & 0xFF;
-            annotatedTestEqualHex(test, actual, expected, tname);
-        }
-        for (let i = 8; i < 16; ++i) {
-            const addr = ((address_2.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
-            const tname = 'sub ' + REG8[i & 7] + ', byte [0x' + addr.toString(16) + ']:';
-            x86.step();
-            annotatedTestEqualHex(test, mem.readWord(addr) & 0xFF, i, tname);
-            const expected = Object.assign({}, regs);
-            assignReg8(expected, i & 7, ((1 << (i & 7)) - i) & 0xFF);
-            compareRegs(test, x86, expected, tname);
-            setRegs(x86, regs);
-        }
-        test.done();
-    },
-    'mod/reg/rm b32 [disp]': function (test) {
-        let regs = {
-            eax: 0x01,
-            ecx: 0x02,
-            edx: 0x04,
-            ebx: 0x08,
-            esp: 0x10,
-            ebp: 0x20,
-            esi: 0x40,
-            edi: 0x80,
-        };
-        let text = Array(48).fill(0x29).concat(Array(48).fill(0x2B));
-        for (let i = 0; i < 16; ++i) {
-            text[6 * i + 1] = 0x05 | ((i & 7) << 3);
-            text[6 * i + 2] = (address_2.STACK_MASK | (i << 2)) & 0xFF;
-            text[6 * i + 3] = (address_2.STACK_MASK >>> 8) & 0xFF;
-            text[6 * i + 4] = (address_2.STACK_MASK >>> 16) & 0xFF;
-            text[6 * i + 5] = (address_2.STACK_MASK >>> 24) & 0xFF;
-        }
-        let stack = Array(256);
-        for (let i = 0; i < 256; ++i) {
-            stack[i] = (i >>> 2) & 0xFF;
-        }
-        let x86 = prepareX86(text, stack, regs);
-        let mem = x86.getMemoryManager();
-        for (let i = 0; i < 8; ++i) {
-            const addr = ((address_2.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
-            const tname = 'sub dword [0x' + addr.toString(16) + '], ' + REG32[i] + ':';
-            x86.step();
-            compareRegs(test, x86, regs, tname);
-            const orig = i | i << 8 | i << 16 | i << 24;
-            const expected = (orig - (1 << i));
-            const actual = mem.readWord(addr);
-            annotatedTestEqualHex(test, actual, expected, tname);
-        }
-        for (let i = 8; i < 16; ++i) {
-            const addr = ((address_2.STACK_MASK | (i << 2)) + 4294967296) % 4294967296;
-            const tname = 'sub ' + REG32[i & 7] + ', dword [0x' + addr.toString(16) + ']:';
-            x86.step();
-            const orig = i | i << 8 | i << 16 | i << 24;
-            annotatedTestEqualHex(test, mem.readWord(addr), orig, tname);
-            const expected = Object.assign({}, regs);
-            assignReg32(expected, i & 7, (1 << (i & 7)) - orig);
-            compareRegs(test, x86, expected, tname);
-            setRegs(x86, regs);
+    'mod/reg/rm [disp]': function (test) {
+        const bitv = [32, 8];
+        for (let bits = bitv.length; bits--;) {
+            for (let reg = 0; reg < 8; ++reg) {
+                for (let offset = 0; offset < 4; ++offset) {
+                    testHelpers['mod/reg/rm [disp]'](test, reg, false, bitv[bits], offset);
+                    testHelpers['mod/reg/rm [disp]'](test, reg, true, bitv[bits], offset);
+                }
+            }
         }
         test.done();
     },
