@@ -8,8 +8,8 @@ interface SegmentLength {
 }
 
 export default class MemoryManager {
-  private text: Uint32Array;
-  private stack: Uint32Array;
+  protected text: Uint32Array;
+  protected stack: Uint32Array;
 
   constructor(sl: SegmentLength) {
     this.text = new Uint32Array(sl.textLength >> 2);
