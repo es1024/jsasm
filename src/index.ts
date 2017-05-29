@@ -5,6 +5,7 @@ import X86, {X86Flag} from './x86';
 
 let mem: MemoryManager = null;
 let x86Machine: X86 = null;
+let started = false;
 
 function toHex(val: number, minlen: number): string {
   if (val < 0) {
@@ -53,14 +54,14 @@ function init(src: string): void {
   });
 
   src = src.toUpperCase().replace(/[^\dA-F]/g, '');
-  const words = src.match(/.{1,8}/g);
+  const words = src.match(/.{1,8}/g) || [];
   for (let i = 0; i < words.length; ++i) {
     const tmp = words[i].match(/.{1,2}/g);
     tmp.reverse();
     mem.writeWord(TEXT_MASK | (i << 2), parseInt(tmp.join(''), 16));
   }
 
-  x86Machine = new X86(mem, {
+  let regs = {
     eax: 0,
     ecx: 0,
     edx: 0,
@@ -78,7 +79,12 @@ function init(src: string): void {
     ds: 0,
     fs: 0,
     gs: 0,
-  });
+  };
+  if (x86Machine != null && !started) {
+    regs = x86Machine.getRegisters();
+  }
+
+  x86Machine = new X86(mem, regs);
 }
 
 function run(): void {
@@ -86,9 +92,10 @@ function run(): void {
 }
 
 function step(): void {
-  if (x86Machine == null) {
+  if (x86Machine == null || !started) {
     init((<any> document).getElementById('x86-src').value);
   }
+  started = true;
   try {
     x86Machine.step();
   } catch (e) {
@@ -114,12 +121,65 @@ function reset(): void {
   init((<any> document).getElementById('x86-src').value);
   syncRegs();
   syncFlags();
-  x86Machine = null;
+  started = false;
   (<any> document).getElementById('x86-error').innerHTML = '';
+}
+
+const longRegs = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi', 'eip',
+    'eflags'];
+const shortRegs = ['es', 'cs', 'ss', 'ds', 'fs', 'gs'];
+const flags = {
+  cf: X86Flag.CF,
+  pf: X86Flag.PF,
+  af: X86Flag.AF,
+  zf: X86Flag.ZF,
+  sf: X86Flag.SF,
+  tf: X86Flag.TF,
+  if: X86Flag.IF,
+  df: X86Flag.DF,
+  of: X86Flag.OF,
+};
+const flagNames = Object.keys(flags);
+
+function updateReg(reg: string, len: number): void {
+  const sval = (<any> document).getElementById('reg-' + reg).value;
+  let val = parseInt(sval, 16) | 0;
+  if (len == 8) {
+    val &= 0xFF;
+  }
+  const regs = x86Machine.getRegisters();
+  (<any> regs)[reg] = val;
+  x86Machine.setRegisters(regs);
+  syncRegs();
+  syncFlags();
+}
+function toggleFlag(flag: string): void {
+  const regs = x86Machine.getRegisters();
+  regs.eflags ^= 1 << flags[flag];
+  x86Machine.setRegisters(regs);
+  syncRegs();
+  syncFlags();
+}
+
+for (let i = longRegs.length; i--; ) {
+  document.getElementById('reg-' + longRegs[i]).onchange = ((reg: string) => () =>
+    updateReg(reg, 32))(longRegs[i]);
+}
+for (let i = shortRegs.length; i--; ) {
+  document.getElementById('reg-' + shortRegs[i]).onchange = ((reg: string) => () =>
+    updateReg(reg, 8))(shortRegs[i]);
+}
+for (let i = flagNames.length; i--; ) {
+  document.getElementById('flg-' + flagNames[i]).onchange = ((flag: string) => () =>
+    toggleFlag(flag))(flagNames[i]);
 }
 
 (<any> window).run = run;
 (<any> window).step = step;
 (<any> window).stop = stop;
 (<any> window).reset = reset;
+
+init('');
+syncRegs();
+syncFlags();
 

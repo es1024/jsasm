@@ -129,6 +129,7 @@ const sigbase_1 = __webpack_require__(1);
 const x86_1 = __webpack_require__(6);
 let mem = null;
 let x86Machine = null;
+let started = false;
 function toHex(val, minlen) {
     if (val < 0) {
         val = 0xFFFFFFFF + val + 1;
@@ -172,13 +173,13 @@ function init(src) {
         stackLength: 65536,
     });
     src = src.toUpperCase().replace(/[^\dA-F]/g, '');
-    const words = src.match(/.{1,8}/g);
+    const words = src.match(/.{1,8}/g) || [];
     for (let i = 0; i < words.length; ++i) {
         const tmp = words[i].match(/.{1,2}/g);
         tmp.reverse();
         mem.writeWord(address_1.TEXT_MASK | (i << 2), parseInt(tmp.join(''), 16));
     }
-    x86Machine = new x86_1.default(mem, {
+    let regs = {
         eax: 0,
         ecx: 0,
         edx: 0,
@@ -195,15 +196,20 @@ function init(src) {
         ds: 0,
         fs: 0,
         gs: 0,
-    });
+    };
+    if (x86Machine != null && !started) {
+        regs = x86Machine.getRegisters();
+    }
+    x86Machine = new x86_1.default(mem, regs);
 }
 function run() {
     document.getElementById('x86-error').innerHTML = 'unimplemented';
 }
 function step() {
-    if (x86Machine == null) {
+    if (x86Machine == null || !started) {
         init(document.getElementById('x86-src').value);
     }
+    started = true;
     try {
         x86Machine.step();
     }
@@ -229,13 +235,59 @@ function reset() {
     init(document.getElementById('x86-src').value);
     syncRegs();
     syncFlags();
-    x86Machine = null;
+    started = false;
     document.getElementById('x86-error').innerHTML = '';
+}
+const longRegs = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi', 'eip',
+    'eflags'];
+const shortRegs = ['es', 'cs', 'ss', 'ds', 'fs', 'gs'];
+const flags = {
+    cf: 0,
+    pf: 2,
+    af: 4,
+    zf: 6,
+    sf: 7,
+    tf: 8,
+    if: 9,
+    df: 10,
+    of: 11,
+};
+const flagNames = Object.keys(flags);
+function updateReg(reg, len) {
+    const sval = document.getElementById('reg-' + reg).value;
+    let val = parseInt(sval, 16) | 0;
+    if (len == 8) {
+        val &= 0xFF;
+    }
+    const regs = x86Machine.getRegisters();
+    regs[reg] = val;
+    x86Machine.setRegisters(regs);
+    syncRegs();
+    syncFlags();
+}
+function toggleFlag(flag) {
+    const regs = x86Machine.getRegisters();
+    regs.eflags ^= 1 << flags[flag];
+    x86Machine.setRegisters(regs);
+    syncRegs();
+    syncFlags();
+}
+for (let i = longRegs.length; i--;) {
+    document.getElementById('reg-' + longRegs[i]).onchange = ((reg) => () => updateReg(reg, 32))(longRegs[i]);
+}
+for (let i = shortRegs.length; i--;) {
+    document.getElementById('reg-' + shortRegs[i]).onchange = ((reg) => () => updateReg(reg, 8))(shortRegs[i]);
+}
+for (let i = flagNames.length; i--;) {
+    document.getElementById('flg-' + flagNames[i]).onchange = ((flag) => () => toggleFlag(flag))(flagNames[i]);
 }
 window.run = run;
 window.step = step;
 window.stop = stop;
 window.reset = reset;
+init('');
+syncRegs();
+syncFlags();
 
 
 /***/ }),
