@@ -110,10 +110,10 @@ function getReg8(regs, reg) {
         case 1: return regs.ecx & 0xFF;
         case 2: return regs.edx & 0xFF;
         case 3: return regs.ebx & 0xFF;
-        case 4: return (regs.eax >> 8) & 0xFF;
-        case 5: return (regs.ecx >> 8) & 0xFF;
-        case 6: return (regs.edx >> 8) & 0xFF;
-        case 7: return (regs.ebx >> 8) & 0xFF;
+        case 4: return (regs.eax >>> 8) & 0xFF;
+        case 5: return (regs.ecx >>> 8) & 0xFF;
+        case 6: return (regs.edx >>> 8) & 0xFF;
+        case 7: return (regs.ebx >>> 8) & 0xFF;
         default: throw new Error('bad register #: ' + reg);
     }
 }
@@ -311,8 +311,8 @@ const testHelpers = {
         const text = Array(6);
         text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1);
         text[1] = mode << 6 | reg << 3 | ireg;
-        for (let i = 0; i < (bits >> 3); ++i) {
-            text[i + 2] = (disp >> (i << 3)) & 0xFF;
+        for (let i = 0; i < (bits >>> 3); ++i) {
+            text[i + 2] = (disp >>> (i << 3)) & 0xFF;
         }
         const stack = Array(8);
         for (let i = 0; i < 8; ++i) {
@@ -333,7 +333,7 @@ const testHelpers = {
                 | (shift + 3) << 24) - rval) & mask;
             const w1 = mem.readWord(0 | address_2.STACK_MASK);
             const w2 = mem.readWord(4 | address_2.STACK_MASK);
-            let actual = w1 >> (shift << 3);
+            let actual = w1 >>> (shift << 3);
             if (shift) {
                 actual |= w2 << ((4 - shift) << 3);
             }
@@ -509,13 +509,13 @@ Suite.run({
         for (let i = 0; i < 16; ++i) {
             text[6 * i + 1] = 0x05 | ((i & 7) << 3);
             text[6 * i + 2] = (address_2.STACK_MASK | (i << 2)) & 0xFF;
-            text[6 * i + 3] = (address_2.STACK_MASK >> 8) & 0xFF;
-            text[6 * i + 4] = (address_2.STACK_MASK >> 16) & 0xFF;
-            text[6 * i + 5] = (address_2.STACK_MASK >> 24) & 0xFF;
+            text[6 * i + 3] = (address_2.STACK_MASK >>> 8) & 0xFF;
+            text[6 * i + 4] = (address_2.STACK_MASK >>> 16) & 0xFF;
+            text[6 * i + 5] = (address_2.STACK_MASK >>> 24) & 0xFF;
         }
         let stack = Array(256);
         for (let i = 0; i < 256; ++i) {
-            stack[i] = (i >> 2) & 0xFF;
+            stack[i] = (i >>> 2) & 0xFF;
         }
         let x86 = prepareX86(text, stack, regs);
         let mem = x86.getMemoryManager();
@@ -555,13 +555,13 @@ Suite.run({
         for (let i = 0; i < 16; ++i) {
             text[6 * i + 1] = 0x05 | ((i & 7) << 3);
             text[6 * i + 2] = (address_2.STACK_MASK | (i << 2)) & 0xFF;
-            text[6 * i + 3] = (address_2.STACK_MASK >> 8) & 0xFF;
-            text[6 * i + 4] = (address_2.STACK_MASK >> 16) & 0xFF;
-            text[6 * i + 5] = (address_2.STACK_MASK >> 24) & 0xFF;
+            text[6 * i + 3] = (address_2.STACK_MASK >>> 8) & 0xFF;
+            text[6 * i + 4] = (address_2.STACK_MASK >>> 16) & 0xFF;
+            text[6 * i + 5] = (address_2.STACK_MASK >>> 24) & 0xFF;
         }
         let stack = Array(256);
         for (let i = 0; i < 256; ++i) {
-            stack[i] = (i >> 2) & 0xFF;
+            stack[i] = (i >>> 2) & 0xFF;
         }
         let x86 = prepareX86(text, stack, regs);
         let mem = x86.getMemoryManager();
