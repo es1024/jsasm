@@ -288,6 +288,42 @@ function assignReg32(regs, reg, val) {
     }
 }
 const testHelpers = {
+    'mod/reg/rm regs': function (test, reg, reg2, dir, bits) {
+        if (dir) {
+            testHelpers['mod/reg/rm regs'](test, reg2, reg, false, bits);
+            return;
+        }
+        let r1val = [0xA0, 0x8A817408][bits == 8 ? 0 : 1];
+        const r2val = [0x35, 0x8BCF8E32][bits == 8 ? 0 : 1];
+        const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
+        const uregs = {
+            eax: 0,
+            ecx: 0,
+            edx: 0,
+            ebx: 0,
+            esp: 0,
+            ebp: 0,
+            esi: 0,
+            edi: 0,
+        };
+        const assignReg = bits == 8 ? assignReg8 : assignReg32;
+        const getReg = bits == 8 ? getReg8 : getReg32;
+        const REG = bits == 8 ? REG8 : REG32;
+        assignReg(uregs, reg, r1val);
+        assignReg(uregs, reg2, r2val);
+        r1val = getReg(uregs, reg);
+        const text = Array(2);
+        text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1);
+        text[1] = 0x3 << 6 | reg << 3 | reg2;
+        const x86 = prepareX86(text, undefined, uregs, 4, 0);
+        const mem = x86.getMemoryManager();
+        x86.step();
+        const tname = 'sub ' + REG[reg2] + ', ' + REG[reg] + ':';
+        const expected = Object.assign({}, uregs);
+        assignReg(expected, reg2, (getReg(expected, reg2) - getReg(expected, reg))
+            & mask);
+        compareRegs(test, x86, expected, tname);
+    },
     'mod/reg/rm non-SIB/disp': function (test, mode, reg, ireg, dir, bits, shift, sign) {
         let disp = sign * [0, 0x7A, 0x7436FE][mode];
         let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
@@ -375,103 +411,14 @@ Suite.run({
         }
         test.done();
     },
-    'mod/reg/rm reg8': function (test) {
-        let regs = {
-            eax: 0xDEAD1001,
-            ecx: 0xDEAD2002,
-            edx: 0xDEAD4004,
-            ebx: 0xDEAD8008,
-        };
-        let text = Array(128).fill(0x28);
-        for (let i = 0; i < 64; ++i) {
-            text[2 * i + 1] = 0xC0 | i;
-        }
-        let x86 = prepareX86(text, undefined, regs);
-        for (let i = 0; i < 8; ++i) {
-            for (let j = 0; j < 8; ++j) {
-                x86.step();
-                let expected = Object.assign({}, regs);
-                assignReg8(expected, j, (1 << j) - (1 << i));
-                compareRegs(test, x86, expected, 'sub ' + REG8[j] + ', ' + REG8[i] + ':');
-                setRegs(x86, regs);
-            }
-        }
-        test.done();
-    },
-    'mod/reg/rm reg32': function (test) {
-        let regs = {
-            eax: 0x01,
-            ecx: 0x02,
-            edx: 0x04,
-            ebx: 0x08,
-            esp: 0x10,
-            ebp: 0x20,
-            esi: 0x40,
-            edi: 0x80,
-        };
-        let text = Array(128).fill(0x29);
-        for (let i = 0; i < 64; ++i) {
-            text[2 * i + 1] = 0xC0 | i;
-        }
-        let x86 = prepareX86(text, undefined, regs);
-        for (let i = 0; i < 8; ++i) {
-            for (let j = 0; j < 8; ++j) {
-                x86.step();
-                let expected = Object.assign({}, regs);
-                assignReg32(expected, j, (1 << j) - (1 << i));
-                compareRegs(test, x86, expected, 'sub ' + REG32[j] + ', ' + REG32[i] + ':');
-                setRegs(x86, regs);
-            }
-        }
-        test.done();
-    },
-    'mod/reg/rm reg8+direction': function (test) {
-        let regs = {
-            eax: 0xDEAD1001,
-            ecx: 0xDEAD2002,
-            edx: 0xDEAD4004,
-            ebx: 0xDEAD8008,
-        };
-        let text = Array(128).fill(0x2A);
-        for (let i = 0; i < 64; ++i) {
-            text[2 * i + 1] = 0xC0 | i;
-        }
-        let x86 = prepareX86(text, undefined, regs);
-        for (let i = 0; i < 8; ++i) {
-            for (let j = 0; j < 8; ++j) {
-                x86.step();
-                let expected = Object.assign({}, regs);
-                assignReg8(expected, i, (1 << i) - (1 << j));
-                compareRegs(test, x86, expected, 'sub ' + REG8[i] + ', ' + REG8[j] + ':');
-                setRegs(x86, regs);
-            }
-        }
-        test.done();
-    },
-    'mod/reg/rm reg32+direction': function (test) {
-        let regs = {
-            eax: 0x01,
-            ecx: 0x02,
-            edx: 0x04,
-            ebx: 0x08,
-            esp: 0x10,
-            ebp: 0x20,
-            esi: 0x40,
-            edi: 0x80,
-        };
-        let text = Array(128).fill(0x2B);
-        for (let i = 0; i < 64; ++i) {
-            text[2 * i + 1] = 0xC0 | i;
-        }
-        let x86 = prepareX86(text, undefined, regs);
-        const rn = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
-        for (let i = 0; i < 8; ++i) {
-            for (let j = 0; j < 8; ++j) {
-                x86.step();
-                let expected = Object.assign({}, regs);
-                assignReg32(expected, i, (1 << i) - (1 << j));
-                compareRegs(test, x86, expected, 'sub ' + REG32[i] + ', ' + REG32[j] + ':');
-                setRegs(x86, regs);
+    'mod/reg/rm reg': function (test) {
+        const bitv = [32, 8];
+        for (let bits = bitv.length; bits--;) {
+            for (let reg = 0; reg < 8; ++reg) {
+                for (let reg2 = 0; reg2 < 8; ++reg2) {
+                    testHelpers['mod/reg/rm regs'](test, reg, reg2, false, bitv[bits]);
+                    testHelpers['mod/reg/rm regs'](test, reg, reg2, true, bitv[bits]);
+                }
             }
         }
         test.done();
