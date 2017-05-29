@@ -35,41 +35,45 @@ export default class MemoryManager {
   readWord(addr: number): number {
     let offset = getAddressOffset(addr);
     if ((offset & 0x3) != 0) {
-      throw new SIGSEGV('malaligned address');
+      throw new SIGSEGV('malaligned address 0x' + addr.toString(16));
     }
     offset >>= 2;
     if (isTextAddress(addr)) {
       if (offset >= this.text.length) {
-        throw new SIGSEGV('text segment address out of bounds');
+        throw new SIGSEGV('text segment address out of bounds 0x'
+            + addr.toString(16));
       }
       return this.text[offset];
     } else if (isStackAddress(addr)) {
       if (offset >= this.stack.length) {
-        throw new SIGSEGV('stack segment address out of bounds');
+        throw new SIGSEGV('stack segment address out of bounds 0x'
+            + addr.toString(16));
       }
       return this.stack[offset];
     }
-    throw new SIGSEGV('bad address');
+    throw new SIGSEGV('bad address 0x' + addr.toString(16));
   }
 
   writeWord(addr: number, value: number): void {
     let offset = getAddressOffset(addr);
     if ((offset & 0x3) != 0) {
-      throw new SIGSEGV('malaligned address');
+      throw new SIGSEGV('malaligned address 0x' + addr.toString(16));
     }
     offset >>= 2;
     if (isTextAddress(addr)) {
       if (offset >= this.text.length) {
-        throw new SIGSEGV('text segment address out of bounds');
+        throw new SIGSEGV('text segment address out of bounds 0x'
+            + addr.toString(16));
       }
       this.text[offset] = value;
     } else if (isStackAddress(addr)) {
       if (offset >= this.stack.length) {
-        throw new SIGSEGV('stack segment address out of bounds');
+        throw new SIGSEGV('stack segment address out of bounds 0x'
+            + addr.toString(16));
       }
       this.stack[offset] = value;
     } else {
-      throw new SIGSEGV('bad address');
+      throw new SIGSEGV('bad address 0x' + addr.toString(16));
     }
   }
 }

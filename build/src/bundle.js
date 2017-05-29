@@ -360,43 +360,47 @@ class MemoryManager {
     readWord(addr) {
         let offset = address_1.getAddressOffset(addr);
         if ((offset & 0x3) != 0) {
-            throw new sigsegv_1.default('malaligned address');
+            throw new sigsegv_1.default('malaligned address 0x' + addr.toString(16));
         }
         offset >>= 2;
         if (address_1.isTextAddress(addr)) {
             if (offset >= this.text.length) {
-                throw new sigsegv_1.default('text segment address out of bounds');
+                throw new sigsegv_1.default('text segment address out of bounds 0x'
+                    + addr.toString(16));
             }
             return this.text[offset];
         }
         else if (address_1.isStackAddress(addr)) {
             if (offset >= this.stack.length) {
-                throw new sigsegv_1.default('stack segment address out of bounds');
+                throw new sigsegv_1.default('stack segment address out of bounds 0x'
+                    + addr.toString(16));
             }
             return this.stack[offset];
         }
-        throw new sigsegv_1.default('bad address');
+        throw new sigsegv_1.default('bad address 0x' + addr.toString(16));
     }
     writeWord(addr, value) {
         let offset = address_1.getAddressOffset(addr);
         if ((offset & 0x3) != 0) {
-            throw new sigsegv_1.default('malaligned address');
+            throw new sigsegv_1.default('malaligned address 0x' + addr.toString(16));
         }
         offset >>= 2;
         if (address_1.isTextAddress(addr)) {
             if (offset >= this.text.length) {
-                throw new sigsegv_1.default('text segment address out of bounds');
+                throw new sigsegv_1.default('text segment address out of bounds 0x'
+                    + addr.toString(16));
             }
             this.text[offset] = value;
         }
         else if (address_1.isStackAddress(addr)) {
             if (offset >= this.stack.length) {
-                throw new sigsegv_1.default('stack segment address out of bounds');
+                throw new sigsegv_1.default('stack segment address out of bounds 0x'
+                    + addr.toString(16));
             }
             this.stack[offset] = value;
         }
         else {
-            throw new sigsegv_1.default('bad address');
+            throw new sigsegv_1.default('bad address 0x' + addr.toString(16));
         }
     }
 }
