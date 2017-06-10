@@ -469,7 +469,7 @@ const testHelpers = {
       annotatedTestEqualHex(test, actual, expected, tname);
     } else {
       const tname = 'sub ' + REG[reg] + ', ' + dsib + '; shift=' + shift + ':';
-    
+
       test.notOk((<CircularStackMemoryManager> mem).anyWrites(), tname);
       const expected = {...uregs};
       assignReg(expected, reg, getReg(expected, reg) - (memVal & mask));
@@ -479,7 +479,6 @@ const testHelpers = {
   'mod/reg/rm SIB disp': function(test: any, reg: number, dir: boolean,
       bits: number, scale: number, sreg: number, offset: number): void {
     const sf = 1 << scale;
-    //let disp = sign * [0, 0x78, 0x1f087068][mode];
     let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
     const sval = 0x2E17410;
     const effAddr = STACK_MASK | offset;
@@ -543,7 +542,7 @@ const testHelpers = {
       annotatedTestEqualHex(test, actual, expected, tname);
     } else {
       const tname = 'sub ' + REG[reg] + ', ' + dsib + '; offset=' + offset + ':';
-    
+
       test.notOk((<CircularStackMemoryManager> mem).anyWrites(), tname);
       const expected = {...uregs};
       assignReg(expected, reg, getReg(expected, reg) - (memVal & mask));
@@ -661,7 +660,7 @@ Suite.run({
         for (let scale = 0; scale < 4; ++scale) {
           for (let sreg = 0; sreg < 8; ++sreg) {
             for (let offset = 0; offset < 4; ++offset) {
-              testHelpers['mod/reg/rm SIB disp'](test, reg, false, bitv[bits], 
+              testHelpers['mod/reg/rm SIB disp'](test, reg, false, bitv[bits],
                   scale, sreg, offset);
               testHelpers['mod/reg/rm SIB disp'](test, reg, true, bitv[bits],
                   scale, sreg, offset);
