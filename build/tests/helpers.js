@@ -7,6 +7,8 @@ const x86_1 = require("../src/x86");
 exports.REG8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
 exports.REG16 = ['ax', 'cx', 'dx', 'bx', 'sp', 'bp', 'si', 'di'];
 exports.REG32 = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
+exports.FLAGS = ['CF', '', 'PF', '', 'AF', '', 'ZF', 'SF', 'TF', 'IF',
+    'DF', 'OF'];
 function hash(addr) {
     addr = (addr ^ 61) ^ (addr >> 16);
     addr = (addr + (addr << 3)) & 0xFFFFFFFF;
@@ -319,4 +321,66 @@ function assignReg32(regs, reg, val) {
     }
 }
 exports.assignReg32 = assignReg32;
+function flagArrayToRegister(flags) {
+    let res = 0;
+    flags.forEach(flag => { res |= 1 << flag; });
+    return res;
+}
+exports.flagArrayToRegister = flagArrayToRegister;
+function flagStrToArray(fstr) {
+    const res = [];
+    const map = {
+        'c': 0,
+        'p': 2,
+        'a': 4,
+        'z': 6,
+        's': 7,
+        't': 8,
+        'i': 9,
+        'd': 10,
+        'o': 11,
+    };
+    for (let i = fstr.length; i-- > 0;) {
+        res.push(map[fstr.charAt(i)]);
+    }
+    return res;
+}
+exports.flagStrToArray = flagStrToArray;
+function testInst(test, text, ireg, oreg, iflags, oflags, skip) {
+    if (typeof skip === 'undefined') {
+        skip = 'tid';
+    }
+    const askip = flagStrToArray(skip);
+    if (iflags.length > 0) {
+        ireg.eflags = flagArrayToRegister(flagStrToArray(iflags));
+    }
+    const inputs = 'input=' +
+        JSON.stringify(ireg) + ', output=' + JSON.stringify(oreg) +
+        ', iflags=' + iflags;
+    const x86 = prepareX86(text, undefined, ireg, (text.length + 3) & ~0x3);
+    x86.step();
+    compareRegs(test, x86, oreg, inputs);
+    if (typeof oflags !== 'undefined') {
+        const aoflag = flagStrToArray(oflags);
+        const checkFlag = flag => {
+            if (askip.indexOf(flag) >= 0) {
+                return;
+            }
+            const chk = aoflag.indexOf(flag) >= 0 ? test.ok : test.notOk;
+            const str = aoflag.indexOf(flag) >= 0 ? 'set' : 'unset';
+            const tstr = exports.FLAGS[flag] + ' should be ' + str + ' for ' + inputs;
+            chk(x86.getFlag(flag), tstr);
+        };
+        checkFlag(0);
+        checkFlag(2);
+        checkFlag(4);
+        checkFlag(6);
+        checkFlag(7);
+        checkFlag(8);
+        checkFlag(9);
+        checkFlag(10);
+        checkFlag(11);
+    }
+}
+exports.testInst = testInst;
 //# sourceMappingURL=helpers.js.map

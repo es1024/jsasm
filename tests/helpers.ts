@@ -25,7 +25,8 @@ export interface X86RegistersOpt {
 export const REG8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
 export const REG16 = ['ax', 'cx', 'dx', 'bx', 'sp', 'bp', 'si', 'di'];
 export const REG32 = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
-
+export const FLAGS = ['CF', '', 'PF', '', 'AF', '', 'ZF', 'SF', 'TF', 'IF',
+    'DF', 'OF'];
 export function hash(addr: number): number {
   addr = (addr ^ 61) ^ (addr >> 16);
   addr = (addr + (addr << 3)) & 0xFFFFFFFF;
@@ -212,6 +213,69 @@ export function assignReg32(regs: X86RegistersOpt, reg: number, val: number): vo
     case 5: regs.ebp = val; break;
     case 6: regs.esi = val; break;
     case 7: regs.edi = val; break;
+  }
+}
+
+export function flagArrayToRegister(flags: X86Flag[]): number {
+  let res = 0;
+  flags.forEach(flag => { res |= 1 << flag; });
+  return res;
+}
+export function flagStrToArray(fstr: string): X86Flag[] {
+  const res: X86Flag[] = [];
+  const map = {
+    'c': X86Flag.CF,
+    'p': X86Flag.PF,
+    'a': X86Flag.AF,
+    'z': X86Flag.ZF,
+    's': X86Flag.SF,
+    't': X86Flag.TF,
+    'i': X86Flag.IF,
+    'd': X86Flag.DF,
+    'o': X86Flag.OF,
+  };
+  for (let i = fstr.length; i-- > 0; ) {
+    res.push(map[fstr.charAt(i)]);
+  }
+  return res;
+}
+
+export function testInst(test: any, text: number[], ireg: X86RegistersOpt,
+    oreg: X86RegistersOpt, iflags: string, oflags?: string, skip?: string): void {
+  if (typeof skip === 'undefined') {
+    skip = 'tid';
+  }
+  const askip = flagStrToArray(skip);
+  if (iflags.length > 0) {
+    ireg.eflags = flagArrayToRegister(flagStrToArray(iflags));
+  }
+  const inputs = 'input=' +
+          JSON.stringify(ireg) + ', output=' + JSON.stringify(oreg) +
+          ', iflags=' + iflags;
+  const x86 = prepareX86(text, undefined, ireg, (text.length + 3) & ~0x3);
+  x86.step();
+  compareRegs(test, x86, oreg, inputs);
+
+  if (typeof oflags !== 'undefined') {
+    const aoflag = flagStrToArray(oflags);
+    const checkFlag = flag => {
+      if (askip.indexOf(flag) >= 0) {
+        return;
+      }
+      const chk = aoflag.indexOf(flag) >= 0 ? test.ok : test.notOk;
+      const str = aoflag.indexOf(flag) >= 0 ? 'set' : 'unset';
+      const tstr = FLAGS[flag] + ' should be ' + str + ' for ' + inputs;
+      chk(x86.getFlag(flag), tstr);
+    };
+    checkFlag(X86Flag.CF);
+    checkFlag(X86Flag.PF);
+    checkFlag(X86Flag.AF);
+    checkFlag(X86Flag.ZF);
+    checkFlag(X86Flag.SF);
+    checkFlag(X86Flag.TF);
+    checkFlag(X86Flag.IF);
+    checkFlag(X86Flag.DF);
+    checkFlag(X86Flag.OF);
   }
 }
 
