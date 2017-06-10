@@ -30,24 +30,46 @@ const REG8 = ['al', 'cl', 'dl', 'bl', 'ah', 'ch', 'dh', 'bh'];
 const REG16 = ['ax', 'cx', 'dx', 'bx', 'sp', 'bp', 'si', 'di'];
 const REG32 = ['eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi'];
 
+function hash(addr: number): number {
+  addr = (addr ^ 61) ^ (addr >> 16);
+  addr = (addr + (addr << 3)) & 0xFFFFFFFF;
+  addr = addr ^ (addr >> 4);
+  addr = (addr * 0x27d4eb2d) & 0xFFFFFFFF;
+  addr = addr ^ (addr >> 15);
+  return (addr >> 11) & 0xFF;
+}
+
 class CircularStackMemoryManager extends MemoryManager {
+  private written: {[addr: number]: number} = {};
   readWord(addr: number): number {
     if (isStackAddress(addr)) {
-      addr = STACK_MASK | (getAddressOffset(addr) % (this.stack.length << 2));
+      let rv: number;
+
+      if (typeof this.written[addr] !== 'undefined') {
+        rv = this.written[addr];
+      } else {
+        rv = hash(addr) | hash(addr + 1) << 8 | hash(addr + 2) << 16 |
+            hash(addr + 3) << 24;
+      }
+      return rv;
     }
     return super.readWord(addr);
   }
   writeWord(addr: number, value: number): void {
     if (isStackAddress(addr)) {
-      addr = STACK_MASK | (getAddressOffset(addr) % (this.stack.length << 2));
+      this.written[addr] = value;
+      return;
     }
     super.writeWord(addr, value);
+  }
+  anyWrites(): boolean {
+    return Object.keys(this.written).length != 0;
   }
 }
 
 function prepareX86(text: number[], stack?: number[], regs?: X86RegistersOpt,
     textLength?: number, stackLength?: number): X86 {
-  const mem = new CircularStackMemoryManager({
+  const mem = new (stackLength ? MemoryManager : CircularStackMemoryManager)({
     textLength: textLength || 256,
     stackLength: stackLength || 256,
   });
@@ -241,6 +263,7 @@ const testHelpers = {
         sign: number): void {
     let disp = sign * [0, 0x7A, 0x7436FE][mode];
     let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
+    const offsbits = [0, 1, 4][mode];
     const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
     const uregs = {
       eax: 0,
@@ -255,21 +278,18 @@ const testHelpers = {
     const assignReg = bits == 8 ? assignReg8 : assignReg32;
     const getReg = bits == 8 ? getReg8 : getReg32;
     const REG = bits == 8 ? REG8 : REG32;
+    const effAddr = (rval + shift) | STACK_MASK;
     assignReg(uregs, reg, rval);
-    assignReg32(uregs, ireg, (rval + shift - disp) | STACK_MASK);
+    assignReg32(uregs, ireg, ((rval + shift) | STACK_MASK) - disp);
     rval = getReg(uregs, reg);
 
     const text = Array(6);
     text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1); // subtract
     text[1] = mode << 6 | reg << 3 | ireg;
-    for (let i = 0; i < (bits >>> 3); ++i) {
+    for (let i = 0; i < offsbits; ++i) {
       text[i + 2] = (disp >>> (i << 3)) & 0xFF;
     }
-    const stack = Array(8);
-    for (let i = 0; i < 8; ++i) {
-      stack[i] = i;
-    }
-    const x86 = prepareX86(text, stack, uregs, 8, 8);
+    const x86 = prepareX86(text, undefined, uregs, 8);
     const mem = x86.getMemoryManager();
 
     let dstr = '';
@@ -278,18 +298,19 @@ const testHelpers = {
     }
 
     x86.step();
+    const memVal = hash(effAddr) | hash(effAddr + 1) << 8 | hash(effAddr + 2) << 16
+        | hash(effAddr + 3) << 24;
     if (!dir) {
       const tname = 'sub ' + ['byte', 'dword'][bits == 8 ? 0 : 1] + ' ['
           + REG32[ireg] + dstr + '], ' + REG[reg] + '; shift=' + shift + ':';
       compareRegs(test, x86, uregs, tname);
 
-      const expected = ((shift | (shift + 1) << 8 | (shift + 2) << 16
-          | (shift + 3) << 24) - rval) & mask;
-      const w1 = mem.readWord(0 | STACK_MASK);
-      const w2 = mem.readWord(4 | STACK_MASK);
-      let actual = w1 >>> (shift << 3);
-      if (shift) {
-        actual |= w2 << ((4 - shift) << 3);
+      const expected = (memVal - rval) & mask;
+      const w1 = mem.readWord(effAddr & ~0x3);
+      const w2 = mem.readWord(4 + (effAddr & ~0x3));
+      let actual = w1 >>> ((effAddr & 0x3) << 3);
+      if ((effAddr & 0x3) != 0) {
+        actual |= w2 << ((4 - (effAddr & 0x3)) << 3);
       }
       actual &= mask;
       annotatedTestEqualHex(test, actual, expected, tname);
@@ -297,16 +318,9 @@ const testHelpers = {
       const tname = 'sub ' + REG[reg] + ', ' + ['byte', 'dword'][bits == 8 ? 0 : 1]
           + ' [' + REG32[ireg] + dstr + ']; shift=' + shift + ':';
 
-      annotatedTestEqualHex(test, mem.readWord(0 | STACK_MASK), 0x03020100, tname);
-      annotatedTestEqualHex(test, mem.readWord(4 | STACK_MASK), 0x07060504, tname);
-
-      let memValue = 0;
-      for (let i = 0; i < 4; ++i) {
-        memValue |= (i + shift) << (i << 3);
-      }
-
+      test.notOk((<CircularStackMemoryManager> mem).anyWrites(), tname);
       const expected = {...uregs};
-      assignReg(expected, reg, getReg(expected, reg) - (memValue & mask));
+      assignReg(expected, reg, getReg(expected, reg) - (memVal & mask));
       compareRegs(test, x86, expected, tname);
     }
   },
@@ -379,6 +393,163 @@ const testHelpers = {
       compareRegs(test, x86, uregs, tname);
     }
   },
+  'mod/reg/rm SIB non-disp': function(test: any, mode: number, reg: number,
+      dir: boolean, bits: number, shift: number, sign: number, scale: number,
+      sreg: number, breg: number): void {
+    let sf = 1 << scale;
+    let disp = sign * [0, 0x78, 0x1f087068][mode];
+    let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
+    let sval = 0x2E17410;
+    const offsbits = [0, 1, 4][mode];
+    const bscale = sreg == breg && sreg != 4 ? sf + 1 : 1;
+    let bval = 0x3DEADF8 + shift - Math.floor(disp / bscale)
+        // 0x40000380 is just slightly larger than STACK_MASK and divisible by
+        // all possible scales, so it should ensure that the address is valid.
+        + Math.floor(0x40000380 / bscale);
+    const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
+    const uregs = {
+      eax: 0,
+      ecx: 0,
+      edx: 0,
+      ebx: 0,
+      esp: 0,
+      ebp: 0,
+      esi: 0,
+      edi: 0,
+    };
+    const assignReg = bits == 8 ? assignReg8 : assignReg32;
+    const getReg = bits == 8 ? getReg8 : getReg32;
+    const REG = bits == 8 ? REG8 : REG32;
+    assignReg(uregs, reg, rval);
+    assignReg32(uregs, sreg, sval);
+    assignReg32(uregs, breg, bval);
+    rval = getReg(uregs, reg);
+    sval = getReg32(uregs, sreg);
+
+    const text = Array(7);
+    text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1); // subtract
+    text[1] = mode << 6 | reg << 3 | 0x4; // 0x4 = SIB
+    text[2] = scale << 6 | sreg << 3 | breg;
+    for (let i = 0; i < offsbits; ++i) {
+      text[i + 3] = (disp >>> (i << 3)) & 0xFF;
+    }
+    const x86 = prepareX86(text, undefined, uregs, 8);
+    const mem = x86.getMemoryManager();
+
+    let dsib = ['byte', 'dword'][bits == 8 ? 0 : 1] + ' ptr [' + sf + '*';
+    dsib += sreg == 4 ? 'eiz' : REG32[sreg];
+    dsib += ' + ' + REG32[breg];
+    if (disp) {
+      dsib += (disp > 0 ? ' + ' : ' - ') + '0x' + Math.abs(disp).toString(16);
+    }
+    dsib += ']';
+    x86.step();
+    const effAddr = sf * (sreg == 4 ? 0 : sval) + bval + disp;
+    let memVal = 0;
+    for (let i = 4; i-- > 0; ) {
+      memVal <<= 8;
+      memVal |= hash(effAddr + i);
+    }
+    memVal &= mask;
+    if (!dir) {
+      const tname = 'sub ' + dsib + ', ' + REG[reg] + '; shift=' + shift + ':';
+      compareRegs(test, x86, uregs, tname);
+      const w1 = mem.readWord(effAddr & ~0x3);
+      const w2 = mem.readWord(4 + (effAddr & ~0x3));
+      let actual = 0;
+      for (let i = 4; i-- > 0; ) {
+        actual <<= 8;
+        let shift = ((effAddr + i) & 3) << 3;
+        let isw1 = ((effAddr + i) & 4) == (effAddr & 4);
+        actual |= ((isw1 ? w1 : w2) & (0xFF << shift)) >>> shift;
+      }
+      actual &= mask;
+
+      const expected = (memVal - getReg(uregs, reg)) & mask;
+      annotatedTestEqualHex(test, actual, expected, tname);
+    } else {
+      const tname = 'sub ' + REG[reg] + ', ' + dsib + '; shift=' + shift + ':';
+    
+      test.notOk((<CircularStackMemoryManager> mem).anyWrites(), tname);
+      const expected = {...uregs};
+      assignReg(expected, reg, getReg(expected, reg) - (memVal & mask));
+      compareRegs(test, x86, expected, tname);
+    }
+  },
+  'mod/reg/rm SIB disp': function(test: any, reg: number, dir: boolean,
+      bits: number, scale: number, sreg: number, offset: number): void {
+    const sf = 1 << scale;
+    //let disp = sign * [0, 0x78, 0x1f087068][mode];
+    let rval = [0xA0, 0x817408][bits == 8 ? 0 : 1];
+    const sval = 0x2E17410;
+    const effAddr = STACK_MASK | offset;
+    const disp = (effAddr - sf * (sreg == 4 ? 0 : sval)) & 0xFFFFFFFF;
+    const mask = [0xFF, 0xFFFFFFFF][bits == 8 ? 0 : 1];
+    const uregs = {
+      eax: 0,
+      ecx: 0,
+      edx: 0,
+      ebx: 0,
+      esp: 0,
+      ebp: 0,
+      esi: 0,
+      edi: 0,
+    };
+    const assignReg = bits == 8 ? assignReg8 : assignReg32;
+    const getReg = bits == 8 ? getReg8 : getReg32;
+    const REG = bits == 8 ? REG8 : REG32;
+    assignReg(uregs, reg, rval);
+    assignReg32(uregs, sreg, sval);
+    rval = getReg(uregs, reg);
+
+    const text = Array(7);
+    text[0] = 0x28 + (dir ? 2 : 0) + (bits == 8 ? 0 : 1); // subtract
+    text[1] = reg << 3 | 0x4; // 0x4 = SIB
+    text[2] = scale << 6 | sreg << 3 | 0x5; // 0x5, mode 0 = disp
+    for (let i = 0; i < 4; ++i) {
+      text[i + 3] = (disp >>> (i << 3)) & 0xFF;
+    }
+    const x86 = prepareX86(text, undefined, uregs, 8);
+    const mem = x86.getMemoryManager();
+
+    let dsib = ['byte', 'dword'][bits == 8 ? 0 : 1] + ' ptr [' + sf + ']';
+    dsib += sreg == 4 ? 'eiz' : REG32[sreg];
+    if (disp) {
+      dsib += (disp > 0 ? ' + ' : ' - ') + '0x' + Math.abs(disp).toString(16);
+    }
+    dsib += ']';
+    x86.step();
+    let memVal = 0;
+    for (let i = 4; i-- > 0; ) {
+      memVal <<= 8;
+      memVal |= hash(effAddr + i);
+    }
+    memVal &= mask;
+    if (!dir) {
+      const tname = 'sub ' + dsib + ', ' + REG[reg] + '; offset=' + offset + ':';
+      compareRegs(test, x86, uregs, tname);
+      const w1 = mem.readWord(effAddr & ~0x3);
+      const w2 = mem.readWord(4 + (effAddr & ~0x3));
+      let actual = 0;
+      for (let i = 4; i-- > 0; ) {
+        actual <<= 8;
+        let shift = ((effAddr + i) & 3) << 3;
+        let isw1 = ((effAddr + i) & 4) == (effAddr & 4);
+        actual |= ((isw1 ? w1 : w2) & (0xFF << shift)) >>> shift;
+      }
+      actual &= mask;
+
+      const expected = (memVal - getReg(uregs, reg)) & mask;
+      annotatedTestEqualHex(test, actual, expected, tname);
+    } else {
+      const tname = 'sub ' + REG[reg] + ', ' + dsib + '; offset=' + offset + ':';
+    
+      test.notOk((<CircularStackMemoryManager> mem).anyWrites(), tname);
+      const expected = {...uregs};
+      assignReg(expected, reg, getReg(expected, reg) - (memVal & mask));
+      compareRegs(test, x86, expected, tname);
+    }
+  },
 };
 Suite.run({
   'single byte instruction extraction': function(test: any): void {
@@ -446,6 +617,56 @@ Suite.run({
         for (let offset = 0; offset < 4; ++offset) {
           testHelpers['mod/reg/rm [disp]'](test, reg, false, bitv[bits], offset);
           testHelpers['mod/reg/rm [disp]'](test, reg, true, bitv[bits], offset);
+        }
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm SIB non-disp': function(test: any): void {
+    const bitv = [32, 8];
+    for (let bits = bitv.length; bits--; ) {
+      for (let mode = 0; mode < 3; ++mode) {
+        for (let reg = 0; reg < 8; ++reg) {
+          for (let sreg = 0; sreg < 8; ++sreg) {
+            for (let breg = 0; breg < 8; ++breg) {
+              if (breg == 5 && mode == 0) {
+                continue;
+              }
+              for (let scale = 0; scale < 4; ++scale) {
+                for (let shift = 0; shift < 4; ++shift) {
+                  testHelpers['mod/reg/rm SIB non-disp'](test, mode, reg, false,
+                      bitv[bits], shift, -1, scale, sreg, breg);
+                  testHelpers['mod/reg/rm SIB non-disp'](test, mode, reg, true,
+                      bitv[bits], shift, -1, scale, sreg, breg);
+                  if (mode == 0) {
+                    continue;
+                  }
+                  testHelpers['mod/reg/rm SIB non-disp'](test, mode, reg, false,
+                      bitv[bits], shift, +1, scale, sreg, breg);
+                  testHelpers['mod/reg/rm SIB non-disp'](test, mode, reg, true,
+                      bitv[bits], shift, +1, scale, sreg, breg);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    test.done();
+  },
+  'mod/reg/rm SIB disp': function(test: any): void {
+    const bitv = [32, 8];
+    for (let bits = bitv.length; bits--; ) {
+      for (let reg = 0; reg < 8; ++reg) {
+        for (let scale = 0; scale < 4; ++scale) {
+          for (let sreg = 0; sreg < 8; ++sreg) {
+            for (let offset = 0; offset < 4; ++offset) {
+              testHelpers['mod/reg/rm SIB disp'](test, reg, false, bitv[bits], 
+                  scale, sreg, offset);
+              testHelpers['mod/reg/rm SIB disp'](test, reg, true, bitv[bits],
+                  scale, sreg, offset);
+            }
+          }
         }
       }
     }
