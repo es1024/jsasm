@@ -305,9 +305,6 @@ export default class X86 {
       scale = SIB >>> 6;
       index = (SIB >>> 3) & 0x7;
       base = SIB & 0x7;
-      if (base == 4) {
-        throw new SIGILL('SIB base=4');
-      }
     }
     switch (mod) {
       case 2:
@@ -328,8 +325,8 @@ export default class X86 {
         } else {
           addr = this.regs[base] + offset;
         }
-        if (RM == 4) {
-          addr += index << scale;
+        if (RM == 4 && index != 4) {
+          addr += this.regs[index] << scale;
         }
         addr &= 0xFFFFFFFF;
 
