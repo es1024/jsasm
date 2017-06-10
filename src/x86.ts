@@ -470,6 +470,8 @@ export default class X86 {
 
   private adc(a: number, b: number, w: boolean): number {
     const cf = (this.regs[X86Reg.EFLAGS] >>> X86Flag.CF) & 1;
+    if (a < 0) { a += 0x100000000; }
+    if (b < 0) { b += 0x100000000; }
     const r = a + b + cf;
     const m = w ? 0xFFFFFFFF : 0xFF;
     const n = w ? 0x80000000 : 0x80;
@@ -480,8 +482,8 @@ export default class X86 {
     this.regs[X86Reg.EFLAGS] |= ((r & m) == 0 ? 1 : 0) << X86Flag.ZF;
     this.regs[X86Reg.EFLAGS] |= ((a & 0xF) + (b & 0xF) + cf > 0xF ? 1 : 0)
         << X86Flag.AF;
-    this.regs[X86Reg.EFLAGS] |= this.parity(a) << X86Flag.PF;
-    this.regs[X86Reg.EFLAGS] |= ((r & m) != (r | 0) ? 1 : 0) << X86Flag.CF;
+    this.regs[X86Reg.EFLAGS] |= this.parity(r) << X86Flag.PF;
+    this.regs[X86Reg.EFLAGS] |= (r > m ? 1 : 0) << X86Flag.CF;
     return r & m;
   }
 

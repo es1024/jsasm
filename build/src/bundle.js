@@ -875,6 +875,12 @@ class X86 {
     }
     adc(a, b, w) {
         const cf = (this.regs[9] >>> 0) & 1;
+        if (a < 0) {
+            a += 0x100000000;
+        }
+        if (b < 0) {
+            b += 0x100000000;
+        }
         const r = a + b + cf;
         const m = w ? 0xFFFFFFFF : 0xFF;
         const n = w ? 0x80000000 : 0x80;
@@ -885,8 +891,8 @@ class X86 {
         this.regs[9] |= ((r & m) == 0 ? 1 : 0) << 6;
         this.regs[9] |= ((a & 0xF) + (b & 0xF) + cf > 0xF ? 1 : 0)
             << 4;
-        this.regs[9] |= this.parity(a) << 2;
-        this.regs[9] |= ((r & m) != (r | 0) ? 1 : 0) << 0;
+        this.regs[9] |= this.parity(r) << 2;
+        this.regs[9] |= (r > m ? 1 : 0) << 0;
         return r & m;
     }
     sbb(a, b, w) {
