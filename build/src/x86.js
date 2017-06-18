@@ -485,6 +485,7 @@ class X86 {
         this.regs[9] ^= 1 << 0;
         const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
         this.regs[9] ^= 1 << 0;
+        this.regs[9] ^= 1 << 4;
         return r;
     }
     and(a, b, w) {

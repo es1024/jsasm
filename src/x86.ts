@@ -491,6 +491,7 @@ export default class X86 {
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
     const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
+    this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.AF;
     return r;
   }
 
