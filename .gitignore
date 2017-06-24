@@ -1,6 +1,7 @@
-*.swp
+.*.s[a-w][a-z]
 *.un~
 node_modules
 *.map
-*.swo
 *.out
+*~
+
