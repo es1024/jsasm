@@ -808,41 +808,33 @@ class X86 {
         return rv;
     }
     processToReg(reg, w, k, other, f) {
-        if (w) {
-            const v = f(this.regs[reg], other, w);
-            if (k) {
+        const v = f(this.getReg(reg, w), other, w);
+        if (k) {
+            if (w) {
                 this.regs[reg] = v;
             }
-        }
-        else {
-            const tmp = f(this.getReg(reg, w), other, w);
-            const regr = reg & 0x3;
-            const regs = (reg & 0x4) << 1;
-            if (k) {
-                this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+            else {
+                const regr = reg & 0x3;
+                const regs = (reg & 0x4) << 1;
+                this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | v << regs;
             }
         }
     }
     processImm(w, reg, k, f) {
+        let imm;
         if (w) {
-            let imm = this.nextInstByte();
+            imm = this.nextInstByte();
             imm |= this.nextInstByte() << 8;
             imm |= this.nextInstByte() << 16;
             imm |= this.nextInstByte() << 24;
-            let v = f(this.regs[reg], imm, w);
-            if (k) {
-                this.regs[reg] = v;
+            if (imm < 0) {
+                imm += 0x100000000;
             }
         }
         else {
-            const imm = this.nextInstByte();
-            const regr = reg & 0x3;
-            const regs = (reg & 0x4) << 1;
-            const tmp = f((this.regs[regr] & (0xFF << regs)) >>> regs, imm, w);
-            if (k) {
-                this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
-            }
+            imm = this.nextInstByte();
         }
+        this.processToReg(reg, w, k, imm, f);
     }
     processJump(negate, cond) {
         let offset;
@@ -899,7 +891,7 @@ class X86 {
         this.regs[9] ^= 1 << 0;
         const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
         this.regs[9] ^= 1 << 0;
-        this.regs[9] ^= 1 << 4;
+        this.regs[9] ^= ((b & 0xF) == 0 ? 0 : 1) << 4;
         return r;
     }
     and(a, b, w) {

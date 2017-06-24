@@ -398,41 +398,33 @@ export default class X86 {
 
   private processToReg(reg: number, w: boolean, k: boolean, other: number,
       f: (a: number, b: number, w: boolean) => number): void {
-    if (w) {
-      const v = f(this.regs[reg], other, w);
-      if (k) {
+    const v = f(this.getReg(reg, w), other, w);
+    if (k) {
+      if (w) {
         this.regs[reg] = v;
-      }
-    } else {
-      const tmp = f(this.getReg(reg, w), other, w);
-      const regr = reg & 0x3;
-      const regs = (reg & 0x4) << 1;
-      if (k) {
-        this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
+      } else {
+        const regr = reg & 0x3;
+        const regs = (reg & 0x4) << 1;
+        this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | v << regs;
       }
     }
   }
 
   private processImm(w: boolean, reg: number, k: boolean,
       f: (a: number, b: number, w: boolean) => number): void {
+    let imm: number;
     if (w) {
-      let imm = this.nextInstByte();
+      imm = this.nextInstByte();
       imm |= this.nextInstByte() << 8;
       imm |= this.nextInstByte() << 16;
       imm |= this.nextInstByte() << 24;
-      let v = f(this.regs[reg], imm, w);
-      if (k) {
-        this.regs[reg] = v;
+      if (imm < 0) {
+        imm += 0x100000000;
       }
     } else {
-      const imm = this.nextInstByte();
-      const regr = reg & 0x3;
-      const regs = (reg & 0x4) << 1;
-      const tmp = f((this.regs[regr] & (0xFF << regs)) >>> regs, imm, w);
-      if (k) {
-        this.regs[regr] = (this.regs[regr] & ~(0xFF << regs)) | tmp << regs;
-      }
+      imm = this.nextInstByte();
     }
+    this.processToReg(reg, w, k, imm, f);
   }
 
   private processJump(negate: boolean, cond: boolean): void {
@@ -491,7 +483,7 @@ export default class X86 {
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
     const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
-    this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.AF;
+    this.regs[X86Reg.EFLAGS] ^= ((b & 0xF) == 0 ? 0 : 1) << X86Flag.AF;
     return r;
   }
 
