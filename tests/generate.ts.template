@@ -1,0 +1,13 @@
+/** THIS FILE IS GENERATED WITH generate.ts, DO NOT EDIT **/
+/* tslint:disable */
+import {X86Flag} from '../src/x86';
+
+import {testInst} from './helpers';
+
+const ti = testInst;
+const tests = {
+{{tests}}
+};
+
+export default tests;
+

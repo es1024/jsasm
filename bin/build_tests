@@ -1,0 +1,31 @@
+#!/bin/bash
+
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)/.."
+
+cd $PROJECT_DIR
+
+./node_modules/.bin/tsc -p .
+rval=$?
+if [ $rval -ne 0 ];
+then
+    echo "tsc failed (error code: $rval)"
+    exit 1
+fi
+
+gcc -Wall -std=gnu99 -O3 -m32 tests/run_bytecode.c -o build/tests/run_bytecode.out
+rval=$?
+if [ $rval -ne 0 ];
+then
+    echo "gcc failed (error code: $rval)"
+    exit 2
+fi
+
+cd $PROJECT_DIR/build/tests
+node generate.js $PROJECT_DIR/tests/*.json
+rval=$?
+if [ $rval -ne 0 ];
+then
+    echo "test generation failed (error code: $rval)"
+    exit 3
+fi
+
