@@ -481,9 +481,9 @@ export default class X86 {
 
   private sbb(a: number, b: number, w: boolean): number {
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
-    const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
+    const r = this.adc(a, (~b) & (w ? 0xFFFFFFFF : 0xFF), w);
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
-    this.regs[X86Reg.EFLAGS] ^= ((b & 0xF) == 0 ? 0 : 1) << X86Flag.AF;
+    this.regs[X86Reg.EFLAGS] ^= ((b & 0xF) == 0 ? 1 : 0) << X86Flag.AF;
     return r;
   }
 
@@ -500,7 +500,6 @@ export default class X86 {
 
   private sub(a: number, b: number, w: boolean): number {
     this.regs[X86Reg.EFLAGS] &= ARITH_FLAG_CLEAR;
-    this.regs[X86Reg.EFLAGS] |= 1 << X86Flag.CF;
     return this.sbb(a, b, w);
   }
 

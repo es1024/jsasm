@@ -475,9 +475,9 @@ class X86 {
     }
     sbb(a, b, w) {
         this.regs[9] ^= 1 << 0;
-        const r = this.adc(a, (w ? 0x100000000 : 0x100) - b, w);
+        const r = this.adc(a, (~b) & (w ? 0xFFFFFFFF : 0xFF), w);
         this.regs[9] ^= 1 << 0;
-        this.regs[9] ^= ((b & 0xF) == 0 ? 0 : 1) << 4;
+        this.regs[9] ^= ((b & 0xF) == 0 ? 1 : 0) << 4;
         return r;
     }
     and(a, b, w) {
@@ -492,7 +492,6 @@ class X86 {
     }
     sub(a, b, w) {
         this.regs[9] &= ARITH_FLAG_CLEAR;
-        this.regs[9] |= 1 << 0;
         return this.sbb(a, b, w);
     }
     xor(a, b, w) {
