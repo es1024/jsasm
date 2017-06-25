@@ -480,10 +480,12 @@ export default class X86 {
   }
 
   private sbb(a: number, b: number, w: boolean): number {
+    const cf = (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF)) != 0 ? 1 : 0;
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
     const r = this.adc(a, (~b) & (w ? 0xFFFFFFFF : 0xFF), w);
     this.regs[X86Reg.EFLAGS] ^= 1 << X86Flag.CF;
-    this.regs[X86Reg.EFLAGS] ^= ((b & 0xF) == 0 ? 1 : 0) << X86Flag.AF;
+    this.regs[X86Reg.EFLAGS] &= ~(1 << X86Flag.AF);
+    this.regs[X86Reg.EFLAGS] |= ((a & 0xF) < (b & 0xF) + cf ? 1 : 0) << X86Flag.AF;
     return r;
   }
 

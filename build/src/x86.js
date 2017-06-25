@@ -474,10 +474,12 @@ class X86 {
         return r & m;
     }
     sbb(a, b, w) {
+        const cf = (this.regs[9] & (1 << 0)) != 0 ? 1 : 0;
         this.regs[9] ^= 1 << 0;
         const r = this.adc(a, (~b) & (w ? 0xFFFFFFFF : 0xFF), w);
         this.regs[9] ^= 1 << 0;
-        this.regs[9] ^= ((b & 0xF) == 0 ? 1 : 0) << 4;
+        this.regs[9] &= ~(1 << 4);
+        this.regs[9] |= ((a & 0xF) < (b & 0xF) + cf ? 1 : 0) << 4;
         return r;
     }
     and(a, b, w) {
