@@ -1,0 +1,549 @@
+{
+    "inst 08 - or r/m8, r8": [
+        {
+            "text": "08C1",
+            "regs": { "eax": "00", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "08C1",
+            "regs": { "eax": "33", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "08C1",
+            "regs": { "eax": "25", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "08C1",
+            "regs": { "eax": "E3", "ecx": "01" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "08C1",
+            "regs": { "eax": "00", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 09 - or r/m32, r32": [
+        {
+            "text": "09C1",
+            "regs": { "eax": "00000000", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "09C1",
+            "regs": { "eax": "3EF75BF3", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "09C1",
+            "regs": { "eax": "3E80CD25", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "09C1",
+            "regs": { "eax": "FFFFFEE3", "ecx": "00000001" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "09C1",
+            "regs": { "eax": "00000000", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 0A - or r8, r/m8": [
+        {
+            "text": "0AC1",
+            "regs": { "eax": "00", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0AC1",
+            "regs": { "eax": "33", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0AC1",
+            "regs": { "eax": "25", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0AC1",
+            "regs": { "eax": "E3", "ecx": "01" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0AC1",
+            "regs": { "eax": "00", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 0B - or r32, r/m32": [
+        {
+            "text": "0BC1",
+            "regs": { "eax": "00000000", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0BC1",
+            "regs": { "eax": "3EF75BF3", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0BC1",
+            "regs": { "eax": "3E80CD25", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0BC1",
+            "regs": { "eax": "FFFFFEE3", "ecx": "00000001" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "0BC1",
+            "regs": { "eax": "00000000", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 0C - or al, imm8": [
+        {
+            "text": "0CF3",
+            "regs": { "eax": "00" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0C00",
+            "regs": { "eax": "33" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0CDA",
+            "regs": { "eax": "25" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0C01",
+            "regs": { "eax": "E3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0C00",
+            "regs": { "eax": "00" },
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 0D - or eax, imm32": [
+        {
+            "text": "0DF35BF7CE",
+            "regs": { "eax": "00000000" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0D00000000",
+            "regs": { "eax": "3EF75BF3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0DDA327FC1",
+            "regs": { "eax": "3E80CD25" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0D01000000",
+            "regs": { "eax": "FFFFFEE3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "0D00000000",
+            "regs": { "eax": "00000000" },
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 20 - and r/m8, r8": [
+        {
+            "text": "20C1",
+            "regs": { "eax": "FF", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "20C1",
+            "regs": { "eax": "33", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "20C1",
+            "regs": { "eax": "25", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "20C1",
+            "regs": { "eax": "E3", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "20C1",
+            "regs": { "eax": "00", "ecx": "BE" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 21 - and r/m32, r32": [
+        {
+            "text": "21C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "21C1",
+            "regs": { "eax": "3EF75BF3", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "21C1",
+            "regs": { "eax": "3E80CD25", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "21C1",
+            "regs": { "eax": "FFFFFFE3", "ecx": "FFFFFFF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "21C1",
+            "regs": { "eax": "00000000", "ecx": "7A8209BE" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 22 - and r8, r/m8": [
+        {
+            "text": "22C1",
+            "regs": { "eax": "FF", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "22C1",
+            "regs": { "eax": "33", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "22C1",
+            "regs": { "eax": "25", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "22C1",
+            "regs": { "eax": "E3", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "22C1",
+            "regs": { "eax": "00", "ecx": "BE" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 23 - and r32, r/m32": [
+        {
+            "text": "23C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "23C1",
+            "regs": { "eax": "3EF75BF3", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "23C1",
+            "regs": { "eax": "3E80CD25", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "23C1",
+            "regs": { "eax": "FFFFFFE3", "ecx": "FFFFFFF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "23C1",
+            "regs": { "eax": "00000000", "ecx": "7A8209BE" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 24 - and al, imm8": [
+        {
+            "text": "24F3",
+            "regs": { "eax": "FF" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "24FF",
+            "regs": { "eax": "33" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "24DA",
+            "regs": { "eax": "25" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "24F3",
+            "regs": { "eax": "E3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "24BE",
+            "regs": { "eax": "00" },
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 25 - and eax, imm32": [
+        {
+            "text": "25F35BF7CE",
+            "regs": { "eax": "FFFFFFFF" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "25FFFFFFFF",
+            "regs": { "eax": "3EF75BF3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "25DA327FC1",
+            "regs": { "eax": "3E80CD25" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "25F3FFFFFF",
+            "regs": { "eax": "FFFFFFE3" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "25BE09827A",
+            "regs": { "eax": "00000000" },
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 30 - xor r/m8, r8": [
+        {
+            "text": "30C1",
+            "regs": { "eax": "00", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "F4", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "24", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "43", "ecx": "01" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "00", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "FF", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "30C1",
+            "regs": { "eax": "FF", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 31 - xor r/m32, r32": [
+        {
+            "text": "31C1",
+            "regs": { "eax": "00000000", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "CEF75BF4", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "3E80CD24", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "4FFFFE43", "ecx": "00000001" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "00000000", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "31C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 32 - xor r8, r/m8": [
+        {
+            "text": "32C1",
+            "regs": { "eax": "00", "ecx": "F3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "F4", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "24", "ecx": "DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "43", "ecx": "01" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "00", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "FF", "ecx": "00" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "32C1",
+            "regs": { "eax": "FF", "ecx": "FF" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 33 - xor r32, r/m32": [
+        {
+            "text": "33C1",
+            "regs": { "eax": "00000000", "ecx": "CEF75BF3" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "CEF75BF4", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "3E80CD24", "ecx": "C17F32DA" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "4FFFFE43", "ecx": "00000001" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "00000000", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "00000000" },
+            "outregs": ["eax", "ecx"]
+        },
+        {
+            "text": "33C1",
+            "regs": { "eax": "FFFFFFFF", "ecx": "FFFFFFFF" },
+            "outregs": ["eax", "ecx"]
+        }
+    ],
+    "inst 34 - xor al, imm8": [
+        {
+            "text": "34F3",
+            "regs": { "eax": "00" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "34FF",
+            "regs": { "eax": "F4" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "34DA",
+            "regs": { "eax": "24" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3401",
+            "regs": { "eax": "43" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3400",
+            "regs": { "eax": "00" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3400",
+            "regs": { "eax": "FF" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "34FF",
+            "regs": { "eax": "FF" },
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 35 - xor r32, r/m32": [
+        {
+            "text": "35F35BF7CE",
+            "regs": { "eax": "00000000" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "35FFFFFFFF",
+            "regs": { "eax": "CEF75BF4" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "35DA327FC1",
+            "regs": { "eax": "3E80CD24" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3501000000",
+            "regs": { "eax": "4FFFFE43" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3500000000",
+            "regs": { "eax": "00000000" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "3500000000",
+            "regs": { "eax": "FFFFFFFF" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "35FFFFFFFF",
+            "regs": { "eax": "FFFFFFFF" },
+            "outregs": ["eax"]
+        }
+    ]
+}
+
