@@ -239,14 +239,14 @@ export default class X86 {
       case 23:
         this.regs[op & 0x7] = this.pushpop(this.regs[op & 0x7], 0, op >= 0x58);
       break;
-      case 32:
+      case 28:
         if (!d) {
           this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) != 0);
         } else {
           this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF)) != 0);
         }
       break;
-      case 33:
+      case 29:
         if (!d) {
           this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.ZF)) != 0);
         } else {
@@ -254,14 +254,14 @@ export default class X86 {
               (1 << X86Flag.ZF))) != 0);
         }
       break;
-      case 34:
+      case 30:
         if (!d) {
           this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.SF)) != 0);
         } else {
           this.processJump(w, (this.regs[X86Reg.EFLAGS] & (1 << X86Flag.PF)) != 0);
         }
       break;
-      case 35:
+      case 31:
         if (!d) {
           this.processJump(w, ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.SF)) == 0)
               != ((this.regs[X86Reg.EFLAGS] & (1 << X86Flag.OF)) == 0));
