@@ -413,6 +413,86 @@ const tests = {
     ti(test, [0x3D, 0x0A, 0x00, 0x00, 0x30], {eax: 0xC0000008}, {eax: 0xC0000008}, '', 'as');
     test.done();
   },
+  "inst 40 - inc eax": function(test: any): void {
+    ti(test, [0x40], {eax: 0x400000FF}, {eax: 0x40000100}, '', 'pa');
+    ti(test, [0x40], {eax: 0xFFFFFFFF}, {eax: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 41 - inc ecx": function(test: any): void {
+    ti(test, [0x41], {ecx: 0x400000FF}, {ecx: 0x40000100}, '', 'pa');
+    ti(test, [0x41], {ecx: 0xFFFFFFFF}, {ecx: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 42 - inc edx": function(test: any): void {
+    ti(test, [0x42], {edx: 0x400000FF}, {edx: 0x40000100}, '', 'pa');
+    ti(test, [0x42], {edx: 0xFFFFFFFF}, {edx: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 43 - inc ebx": function(test: any): void {
+    ti(test, [0x43], {ebx: 0x400000FF}, {ebx: 0x40000100}, '', 'pa');
+    ti(test, [0x43], {ebx: 0xFFFFFFFF}, {ebx: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 44 - inc esp": function(test: any): void {
+    ti(test, [0x44], {esp: 0x400000FF}, {esp: 0x40000100}, '', 'pa');
+    ti(test, [0x44], {esp: 0xFFFFFFFF}, {esp: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 45 - inc ebp": function(test: any): void {
+    ti(test, [0x45], {ebp: 0x400000FF}, {ebp: 0x40000100}, '', 'pa');
+    ti(test, [0x45], {ebp: 0xFFFFFFFF}, {ebp: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 46 - inc esi": function(test: any): void {
+    ti(test, [0x46], {esi: 0x400000FF}, {esi: 0x40000100}, '', 'pa');
+    ti(test, [0x46], {esi: 0xFFFFFFFF}, {esi: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 47 - inc edi": function(test: any): void {
+    ti(test, [0x47], {edi: 0x400000FF}, {edi: 0x40000100}, '', 'pa');
+    ti(test, [0x47], {edi: 0xFFFFFFFF}, {edi: 0x0}, 'c', 'cpaz');
+    test.done();
+  },
+  "inst 48 - dec eax": function(test: any): void {
+    ti(test, [0x48], {eax: 0x40000100}, {eax: 0x400000FF}, '', 'pa');
+    ti(test, [0x48], {eax: 0x00000000}, {eax: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 49 - dec ecx": function(test: any): void {
+    ti(test, [0x49], {ecx: 0x40000100}, {ecx: 0x400000FF}, '', 'pa');
+    ti(test, [0x49], {ecx: 0x00000000}, {ecx: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4A - dec edx": function(test: any): void {
+    ti(test, [0x4A], {edx: 0x40000100}, {edx: 0x400000FF}, '', 'pa');
+    ti(test, [0x4A], {edx: 0x00000000}, {edx: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4B - dec ebx": function(test: any): void {
+    ti(test, [0x4B], {ebx: 0x40000100}, {ebx: 0x400000FF}, '', 'pa');
+    ti(test, [0x4B], {ebx: 0x00000000}, {ebx: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4C - dec esp": function(test: any): void {
+    ti(test, [0x4C], {esp: 0x40000100}, {esp: 0x400000FF}, '', 'pa');
+    ti(test, [0x4C], {esp: 0x00000000}, {esp: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4D - dec ebp": function(test: any): void {
+    ti(test, [0x4D], {ebp: 0x40000100}, {ebp: 0x400000FF}, '', 'pa');
+    ti(test, [0x4D], {ebp: 0x00000000}, {ebp: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4E - dec esi": function(test: any): void {
+    ti(test, [0x4E], {esi: 0x40000100}, {esi: 0x400000FF}, '', 'pa');
+    ti(test, [0x4E], {esi: 0x00000000}, {esi: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
+  "inst 4F - dec edi": function(test: any): void {
+    ti(test, [0x4F], {edi: 0x40000100}, {edi: 0x400000FF}, '', 'pa');
+    ti(test, [0x4F], {edi: 0x00000000}, {edi: 0xFFFFFFFF}, 'c', 'cpas');
+    test.done();
+  },
 };
 
 export default tests;

@@ -1844,5 +1844,213 @@
             "regs": { "eax": "C0000008" },
             "outregs": ["eax"]
         }
+    ],
+    "inst 40 - inc eax": [
+        {
+            "text": "40",
+            "regs": { "eax": "400000FF" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "40",
+            "regs": { "eax": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 41 - inc ecx": [
+        {
+            "text": "41",
+            "regs": { "ecx": "400000FF" },
+            "outregs": ["ecx"]
+        },
+        {
+            "text": "41",
+            "regs": { "ecx": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["ecx"]
+        }
+    ],
+    "inst 42 - inc edx": [
+        {
+            "text": "42",
+            "regs": { "edx": "400000FF" },
+            "outregs": ["edx"]
+        },
+        {
+            "text": "42",
+            "regs": { "edx": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["edx"]
+        }
+    ],
+    "inst 43 - inc ebx": [
+        {
+            "text": "43",
+            "regs": { "ebx": "400000FF" },
+            "outregs": ["ebx"]
+        },
+        {
+            "text": "43",
+            "regs": { "ebx": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["ebx"]
+        }
+    ],
+    "inst 44 - inc esp": [
+        {
+            "text": "44",
+            "regs": { "esp": "400000FF" },
+            "outregs": ["esp"]
+        },
+        {
+            "text": "44",
+            "regs": { "esp": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["esp"]
+        }
+    ],
+    "inst 45 - inc ebp": [
+        {
+            "text": "45",
+            "regs": { "ebp": "400000FF" },
+            "outregs": ["ebp"]
+        },
+        {
+            "text": "45",
+            "regs": { "ebp": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["ebp"]
+        }
+    ],
+    "inst 46 - inc esi": [
+        {
+            "text": "46",
+            "regs": { "esi": "400000FF" },
+            "outregs": ["esi"]
+        },
+        {
+            "text": "46",
+            "regs": { "esi": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["esi"]
+        }
+    ],
+    "inst 47 - inc edi": [
+        {
+            "text": "47",
+            "regs": { "edi": "400000FF" },
+            "outregs": ["edi"]
+        },
+        {
+            "text": "47",
+            "regs": { "edi": "FFFFFFFF" },
+            "flgs": "c",
+            "outregs": ["edi"]
+        }
+    ],
+    "inst 48 - dec eax": [
+        {
+            "text": "48",
+            "regs": { "eax": "40000100" },
+            "outregs": ["eax"]
+        },
+        {
+            "text": "48",
+            "regs": { "eax": "00000000" },
+            "flgs": "c",
+            "outregs": ["eax"]
+        }
+    ],
+    "inst 49 - dec ecx": [
+        {
+            "text": "49",
+            "regs": { "ecx": "40000100" },
+            "outregs": ["ecx"]
+        },
+        {
+            "text": "49",
+            "regs": { "ecx": "00000000" },
+            "flgs": "c",
+            "outregs": ["ecx"]
+        }
+    ],
+    "inst 4A - dec edx": [
+        {
+            "text": "4A",
+            "regs": { "edx": "40000100" },
+            "outregs": ["edx"]
+        },
+        {
+            "text": "4A",
+            "regs": { "edx": "00000000" },
+            "flgs": "c",
+            "outregs": ["edx"]
+        }
+    ],
+    "inst 4B - dec ebx": [
+        {
+            "text": "4B",
+            "regs": { "ebx": "40000100" },
+            "outregs": ["ebx"]
+        },
+        {
+            "text": "4B",
+            "regs": { "ebx": "00000000" },
+            "flgs": "c",
+            "outregs": ["ebx"]
+        }
+    ],
+    "inst 4C - dec esp": [
+        {
+            "text": "4C",
+            "regs": { "esp": "40000100" },
+            "outregs": ["esp"]
+        },
+        {
+            "text": "4C",
+            "regs": { "esp": "00000000" },
+            "flgs": "c",
+            "outregs": ["esp"]
+        }
+    ],
+    "inst 4D - dec ebp": [
+        {
+            "text": "4D",
+            "regs": { "ebp": "40000100" },
+            "outregs": ["ebp"]
+        },
+        {
+            "text": "4D",
+            "regs": { "ebp": "00000000" },
+            "flgs": "c",
+            "outregs": ["ebp"]
+        }
+    ],
+    "inst 4E - dec esi": [
+        {
+            "text": "4E",
+            "regs": { "esi": "40000100" },
+            "outregs": ["esi"]
+        },
+        {
+            "text": "4E",
+            "regs": { "esi": "00000000" },
+            "flgs": "c",
+            "outregs": ["esi"]
+        }
+    ],
+    "inst 4F - dec edi": [
+        {
+            "text": "4F",
+            "regs": { "edi": "40000100" },
+            "outregs": ["edi"]
+        },
+        {
+            "text": "4F",
+            "regs": { "edi": "00000000" },
+            "flgs": "c",
+            "outregs": ["edi"]
+        }
     ]
 }
