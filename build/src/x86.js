@@ -220,12 +220,14 @@ class X86 {
             case 17:
                 tmp = this.regs[9] & (1 << 0);
                 this.regs[op & 0x7] = this.add(this.regs[op & 0x7], 1, true);
+                this.regs[9] &= ~(1 << 0);
                 this.regs[9] |= tmp;
                 break;
             case 18:
             case 19:
                 tmp = this.regs[9] & (1 << 0);
                 this.regs[op & 0x7] = this.sub(this.regs[op & 0x7], 1, true);
+                this.regs[9] &= ~(1 << 0);
                 this.regs[9] |= tmp;
                 break;
             case 20:

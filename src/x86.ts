@@ -225,12 +225,14 @@ export default class X86 {
       case 17:
         tmp = this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF);
         this.regs[op & 0x7] = this.add(this.regs[op & 0x7], 1, true);
+        this.regs[X86Reg.EFLAGS] &= ~(1 << X86Flag.CF);
         this.regs[X86Reg.EFLAGS] |= tmp;
       break;
       case 18:
       case 19:
         tmp = this.regs[X86Reg.EFLAGS] & (1 << X86Flag.CF);
         this.regs[op & 0x7] = this.sub(this.regs[op & 0x7], 1, true);
+        this.regs[X86Reg.EFLAGS] &= ~(1 << X86Flag.CF);
         this.regs[X86Reg.EFLAGS] |= tmp;
       break;
       case 20:
