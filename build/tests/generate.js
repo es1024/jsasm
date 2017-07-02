@@ -114,6 +114,8 @@ Promise.resolve((() => __awaiter(this, void 0, void 0, function* () {
                     ecx: values[2],
                     edx: values[3],
                     ebx: values[4],
+                    esp: values[5],
+                    ebp: values[6],
                     esi: values[7],
                     edi: values[8],
                 };
